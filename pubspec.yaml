@@ -136,4 +136,14 @@ flutter:
 flutter_icons:
   android: true
   ios: true
-  image_path: "app.png"
+  web:
+    generate: true
+  windows:
+    generate: true
+  macos:
+    generate: true
+  linux:
+    generate: true
+  image_path: "assets/icon/App_icon.png"
+  adaptive_icon_background: "#1a1a2e"
+  adaptive_icon_foreground: "assets/icon/App_icon.png"

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/habit.dart';
 import '../providers/habit_provider.dart';
+import '../screens/habits/edit_habit_screen.dart';
 
 class ModernHabitCard extends StatelessWidget {
   final Habit habit;
@@ -16,34 +17,114 @@ class ModernHabitCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isCompleted = habit.isCompletedToday();
+    final isFullyCompleted = habit.isFullyCompletedToday();
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E1E1E) : const Color(0xFF2D2D2D),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
+    return Dismissible(
+      key: ValueKey(habit.id),
+      direction: DismissDirection.horizontal,
+      confirmDismiss: (direction) async {
+        if (direction == DismissDirection.endToStart) {
+          // Swipe left - Edit
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => EditHabitScreen(habit: habit),
+            ),
+          );
+          return false; // Don't dismiss
+        } else if (direction == DismissDirection.startToEnd) {
+          // Swipe right - Quick complete (if not fully completed)
+          if (!isFullyCompleted) {
+            Provider.of<HabitProvider>(context, listen: false)
+                .toggleHabitCompletion(habit.id, context);
+          }
+          return false; // Don't dismiss
+        }
+        return false;
+      },
+      background: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: Colors.green,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        alignment: Alignment.centerLeft,
+        padding: const EdgeInsets.only(left: 24),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            // Top Section - Header
-            _buildHeader(context, isCompleted),
-            const SizedBox(height: 16),
-            
-            // Main Section - Calendar Grid
-            _buildCalendarGrid(context),
+            Icon(
+              isFullyCompleted ? Icons.check_circle : Icons.check_circle_outline,
+              color: Colors.white,
+              size: 32,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              isFullyCompleted ? 'Completed' : 'Complete',
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 12,
+              ),
+            ),
           ],
+        ),
+      ),
+      secondaryBackground: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.primary,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        alignment: Alignment.centerRight,
+        padding: const EdgeInsets.only(right: 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: const [
+            Icon(
+              Icons.edit,
+              color: Colors.white,
+              size: 32,
+            ),
+            SizedBox(height: 4),
+            Text(
+              'Edit',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 12,
+              ),
+            ),
+          ],
+        ),
+      ),
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF1E1E1E) : const Color(0xFF2D2D2D),
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Top Section - Header
+              _buildHeader(context, isCompleted),
+              const SizedBox(height: 16),
+              
+              // Main Section - Calendar Grid
+              _buildCalendarGrid(context),
+            ],
+          ),
         ),
       ),
     );

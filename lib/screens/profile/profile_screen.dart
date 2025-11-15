@@ -12,6 +12,7 @@ import 'analysis_screen.dart';
 import '../subscription/subscription_plans_screen.dart';
 import 'leaderboard_screen.dart';
 import '../../widgets/avatar_picker.dart';
+import '../../widgets/hero_stats_card.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -66,7 +67,7 @@ class ProfileScreen extends StatelessWidget {
           children: [
             _buildProfileHeader(context),
             const SizedBox(height: 20),
-            _buildNewStatsSection(context),
+            _buildHeroStatsCard(context),
             const SizedBox(height: 20),
             _buildMenuSection(context),
           ],
@@ -172,6 +173,59 @@ class ProfileScreen extends StatelessWidget {
         );
       },
     );
+  }
+
+  Widget _buildHeroStatsCard(BuildContext context) {
+    return Consumer<HabitProvider>(
+      builder: (context, habitProvider, child) {
+        // Calculate current streak
+        int currentStreak = _calculateCurrentAllHabitsStreak(habitProvider);
+        
+        // Calculate weekly completion percentage
+        int weeklyCompletionPercentage = _calculateWeeklyCompletionPercentage(habitProvider);
+        
+        return HeroStatsCard(
+          currentStreak: currentStreak,
+          weeklyCompletionPercentage: weeklyCompletionPercentage,
+          habitProvider: habitProvider,
+        );
+      },
+    );
+  }
+
+  int _calculateWeeklyCompletionPercentage(HabitProvider habitProvider) {
+    final activeHabits = habitProvider.activeHabits;
+    if (activeHabits.isEmpty) return 0;
+    
+    final today = DateTime.now();
+    int totalPossibleCompletions = 0;
+    int actualCompletions = 0;
+    
+    // Check last 7 days
+    for (int daysBack = 0; daysBack < 7; daysBack++) {
+      final checkDate = today.subtract(Duration(days: daysBack));
+      
+      // Get habits that existed on this date
+      List<Habit> habitsOnDate = activeHabits.where((habit) => 
+          !habit.createdAt.isAfter(checkDate)).toList();
+      
+      totalPossibleCompletions += habitsOnDate.length;
+      
+      // Count completions on this date
+      for (var habit in habitsOnDate) {
+        bool habitCompleted = habit.completedDates.any((date) =>
+            date.year == checkDate.year &&
+            date.month == checkDate.month &&
+            date.day == checkDate.day);
+        
+        if (habitCompleted) {
+          actualCompletions++;
+        }
+      }
+    }
+    
+    if (totalPossibleCompletions == 0) return 0;
+    return ((actualCompletions / totalPossibleCompletions) * 100).round();
   }
 
   Widget _buildNewStatsSection(BuildContext context) {
