@@ -173,11 +173,11 @@ class _ModernButtonState extends State<ModernButton>
     switch (widget.type) {
       case ModernButtonType.primary:
         return BoxDecoration(
-          color: isEnabled ? baseColor : baseColor.withValues(alpha: 0.5),
+          color: isEnabled ? baseColor : baseColor.withOpacity( 0.5),
           borderRadius: BorderRadius.circular(_getBorderRadius()),
           boxShadow: isEnabled && !_isPressed ? [
             BoxShadow(
-              color: baseColor.withValues(alpha: 0.3),
+              color: baseColor.withOpacity( 0.3),
               blurRadius: 8,
               offset: const Offset(0, 4),
             ),
@@ -187,24 +187,24 @@ class _ModernButtonState extends State<ModernButton>
       case ModernButtonType.secondary:
         return BoxDecoration(
           color: isEnabled 
-              ? baseColor.withValues(alpha: 0.1) 
-              : baseColor.withValues(alpha: 0.05),
+              ? baseColor.withOpacity( 0.1) 
+              : baseColor.withOpacity( 0.05),
           borderRadius: BorderRadius.circular(_getBorderRadius()),
           border: Border.all(
             color: isEnabled 
-                ? baseColor.withValues(alpha: 0.2) 
-                : baseColor.withValues(alpha: 0.1),
+                ? baseColor.withOpacity( 0.2) 
+                : baseColor.withOpacity( 0.1),
           ),
         );
       
       case ModernButtonType.outline:
         return BoxDecoration(
           color: _isPressed && isEnabled 
-              ? baseColor.withValues(alpha: 0.05) 
+              ? baseColor.withOpacity( 0.05) 
               : Colors.transparent,
           borderRadius: BorderRadius.circular(_getBorderRadius()),
           border: Border.all(
-            color: isEnabled ? baseColor : baseColor.withValues(alpha: 0.5),
+            color: isEnabled ? baseColor : baseColor.withOpacity( 0.5),
             width: 1.5,
           ),
         );
@@ -212,7 +212,7 @@ class _ModernButtonState extends State<ModernButton>
       case ModernButtonType.ghost:
         return BoxDecoration(
           color: _isPressed && isEnabled 
-              ? baseColor.withValues(alpha: 0.1) 
+              ? baseColor.withOpacity( 0.1) 
               : Colors.transparent,
           borderRadius: BorderRadius.circular(_getBorderRadius()),
         );
@@ -220,11 +220,11 @@ class _ModernButtonState extends State<ModernButton>
       case ModernButtonType.destructive:
         final destructiveColor = Colors.red;
         return BoxDecoration(
-          color: isEnabled ? destructiveColor : destructiveColor.withValues(alpha: 0.5),
+          color: isEnabled ? destructiveColor : destructiveColor.withOpacity( 0.5),
           borderRadius: BorderRadius.circular(_getBorderRadius()),
           boxShadow: isEnabled && !_isPressed ? [
             BoxShadow(
-              color: destructiveColor.withValues(alpha: 0.3),
+              color: destructiveColor.withOpacity( 0.3),
               blurRadius: 8,
               offset: const Offset(0, 4),
             ),
@@ -254,7 +254,7 @@ class _ModernButtonState extends State<ModernButton>
       case ModernButtonType.secondary:
       case ModernButtonType.outline:
       case ModernButtonType.ghost:
-        return isEnabled ? baseColor : baseColor.withValues(alpha: 0.5);
+        return isEnabled ? baseColor : baseColor.withOpacity( 0.5);
       
       case ModernButtonType.destructive:
         return Colors.white;

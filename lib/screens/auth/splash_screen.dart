@@ -50,26 +50,35 @@ class _SplashScreenState extends State<SplashScreen>
   }
 
   Future<void> _checkAuthAndNavigate() async {
-    // Wait for splash animation and auth provider initialization
+    // Wait for splash animation
     await Future.delayed(const Duration(seconds: 3));
     
     if (!mounted) return;
     
     try {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      final admobService = Provider.of<AdmobService>(context, listen: false);
       
       // Initialize saved view mode preference
-      await NavigationService.initializeViewMode();
+      try {
+        await NavigationService.initializeViewMode();
+      } catch (e) {
+        print('⚠️ NavigationService init failed: $e');
+      }
       
       // Give auth provider extra time to initialize if needed
       await Future.delayed(const Duration(milliseconds: 500));
       
       if (!mounted) return;
 
-      admobService.loadInterstitialAd();
-      await Future.delayed(const Duration(seconds: 2)); // Give ad time to load
-      admobService.showInterstitialAd();
+      // Try to load and show ad (may fail on web)
+      try {
+        final admobService = Provider.of<AdmobService>(context, listen: false);
+        admobService.loadInterstitialAd();
+        await Future.delayed(const Duration(seconds: 1));
+        admobService.showInterstitialAd();
+      } catch (e) {
+        print('⚠️ AdMob not available: $e');
+      }
       
       if (authProvider.isAuthenticated) {
         if (NavigationService.isGridViewMode) {
@@ -87,6 +96,7 @@ class _SplashScreenState extends State<SplashScreen>
         );
       }
     } catch (e) {
+      print('❌ Navigation error: $e');
       // Fallback to onboarding if there's any error
       if (mounted) {
         Navigator.of(context).pushReplacement(

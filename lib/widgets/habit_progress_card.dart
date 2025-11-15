@@ -20,10 +20,10 @@ class HabitProgressCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: theme.cardColor,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: theme.colorScheme.outline.withValues(alpha: 0.2)),
+        border: Border.all(color: theme.colorScheme.outline.withOpacity( 0.2)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: Colors.black.withOpacity( 0.05),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
@@ -53,7 +53,7 @@ class HabitProgressCard extends StatelessWidget {
                   ),
                   child: Container(
                     decoration: BoxDecoration(
-                      color: habit.color.withValues(alpha: 0.18),
+                      color: habit.color.withOpacity( 0.18),
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
@@ -73,7 +73,7 @@ class HabitProgressCard extends StatelessWidget {
                         style: theme.textTheme.titleMedium?.copyWith(
                               fontWeight: FontWeight.w700,
                               color: isCompleted
-                                  ? theme.colorScheme.onSurface.withValues(alpha: 0.45)
+                                  ? theme.colorScheme.onSurface.withOpacity( 0.45)
                                   : theme.colorScheme.onSurface,
                             ),
                       ),
@@ -125,7 +125,7 @@ class HabitProgressCard extends StatelessWidget {
                           Text(
                             '${habit.currentStreak} day streak',
                             style: theme.textTheme.bodySmall?.copyWith(
-                                  color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                                  color: theme.colorScheme.onSurface.withOpacity( 0.6),
                                 ),
                           ),
                         ],

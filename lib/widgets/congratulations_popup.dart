@@ -75,7 +75,7 @@ class _CongratulationsPopupState extends State<CongratulationsPopup>
       children: [
         // Background overlay
         Container(
-          color: Colors.black.withValues(alpha: 0.7),
+          color: Colors.black.withOpacity( 0.7),
           child: Center(
             child: SlideTransition(
               position: _slideAnimation,
@@ -88,11 +88,11 @@ class _CongratulationsPopupState extends State<CongratulationsPopup>
                     color: theme.cardColor,
                     borderRadius: BorderRadius.circular(28),
                     border: Border.all(
-                      color: theme.colorScheme.outline.withValues(alpha: 0.2),
+                      color: theme.colorScheme.outline.withOpacity( 0.2),
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.1),
+                        color: Colors.black.withOpacity( 0.1),
                         blurRadius: 20,
                         offset: const Offset(0, 10),
                       ),
@@ -117,7 +117,7 @@ class _CongratulationsPopupState extends State<CongratulationsPopup>
                           borderRadius: BorderRadius.circular(40),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.amber.withValues(alpha: 0.3),
+                              color: Colors.amber.withOpacity( 0.3),
                               blurRadius: 15,
                               offset: const Offset(0, 5),
                             ),
