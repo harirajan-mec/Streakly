@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/habit_provider.dart';
 import '../../models/habit.dart';
+import 'test_notification_screen.dart';
 
 class RemindersScreen extends StatelessWidget {
   const RemindersScreen({super.key});
@@ -37,6 +38,20 @@ class RemindersScreen extends StatelessWidget {
             ),
           ],
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.bug_report),
+            tooltip: 'Test Notifications',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const TestNotificationScreen(),
+                ),
+              );
+            },
+          ),
+        ],
       ),
       body: Consumer<HabitProvider>(
         builder: (context, habitProvider, child) {

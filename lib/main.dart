@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:device_preview/device_preview.dart';
 import 'package:flutter/foundation.dart';
+
 import 'screens/auth/splash_screen.dart';
 import 'providers/auth_provider.dart';
 import 'providers/habit_provider.dart';
@@ -16,46 +17,50 @@ import 'services/notification_service.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize Supabase (with error handling for web preview)
+  // Initialize Supabase (safe mode)
   try {
     await SupabaseService.initialize();
     print('✅ Supabase initialized');
   } catch (e) {
-    print('⚠️ Supabase initialization failed (running in offline mode): $e');
+    print('⚠️ Supabase initialization failed (offline): $e');
   }
 
-  // Initialize MobileAds (with error handling for web)
+  // Initialize Google Mobile Ads (safe mode)
   try {
     await MobileAds.instance.initialize();
     print('✅ MobileAds initialized');
   } catch (e) {
-    print('⚠️ MobileAds not available on web: $e');
+    print('⚠️ Ads unavailable: $e');
   }
 
-  // Initialize Notification Service (with error handling for web)
+  // Initialize Notification Service
+  final NotificationService notificationService = NotificationService();
+
   try {
-    final NotificationService notificationService = NotificationService();
     await notificationService.init();
     await notificationService.requestPermissions();
+
+    // 🔥 One-time cleanup of corrupted old notifications
+    await notificationService.cleanupOldCorruptedNotifications();
+    print('🧹 Old notifications cleaned');
+
     print('✅ Notifications initialized');
   } catch (e) {
-    print('⚠️ Notifications not available on web: $e');
+    print('⚠️ Notifications not available: $e');
   }
 
-  // Handle Flutter framework errors gracefully
+  // Prevent Flutter-specific non-fatal framework crashes (DevicePreview)
   FlutterError.onError = (FlutterErrorDetails details) {
-    // Log the error but don't crash the app for framework issues
     if (details.exception.toString().contains('_debugDuringDeviceUpdate')) {
-      // Ignore mouse tracker assertion errors
-      return;
+      return; // Ignore mouse tracker errors in DevicePreview
     }
     FlutterError.presentError(details);
   };
 
   runApp(
     DevicePreview(
-      enabled: !kReleaseMode, // Only enable in debug/profile mode, not in release
-      builder: (context) => StreaklyApp(),
+      enabled: !kReleaseMode,
+      builder: (context) => const StreaklyApp(),
     ),
   );
 }
@@ -69,12 +74,6 @@ class StreaklyApp extends StatefulWidget {
 
 class _StreaklyAppState extends State<StreaklyApp> {
   final AdmobService _admobService = AdmobService();
-
-  @override
-  void initState() {
-    super.initState();
-    // Ad loading is now handled by AuthProvider based on premium status
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -93,11 +92,10 @@ class _StreaklyAppState extends State<StreaklyApp> {
         builder: DevicePreview.appBuilder,
         theme: ThemeData(
           useMaterial3: true,
-          colorScheme: ColorScheme.dark(
-            primary: const Color(0xFF4B0082), // Exact #4B0082 (Indigo/Purple)
-            // Keep dark theme colors but use exact primary color
-            secondary: const Color(0xFF4B0082),
-            surface: const Color(0xFF121212),
+          colorScheme: const ColorScheme.dark(
+            primary: Color(0xFF4B0082),
+            secondary: Color(0xFF4B0082),
+            surface: Color(0xFF121212),
           ),
           textTheme: GoogleFonts.interTextTheme(
             ThemeData.dark().textTheme,

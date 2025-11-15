@@ -13,6 +13,7 @@ import '../subscription/subscription_plans_screen.dart';
 import 'leaderboard_screen.dart';
 import '../../widgets/avatar_picker.dart';
 import '../../widgets/hero_stats_card.dart';
+import '../reminders/test_notification_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -407,6 +408,22 @@ class ProfileScreen extends StatelessWidget {
                 Navigator.of(context).push(
                   MaterialPageRoute(builder: (_) => const LeaderboardScreen()),
                 );
+              },
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        _buildMenuCard(
+          context,
+          [
+            _buildMenuItem(
+              context,
+              title: 'Notification Settings',
+              subtitle: 'Test and manage your habit reminders',
+              icon: Icons.notifications_active,
+              iconColor: Colors.blueAccent,
+              onTap: () {
+                _showNotificationSettingsDialog(context);
               },
             ),
           ],
@@ -1146,6 +1163,98 @@ class ProfileScreen extends StatelessWidget {
                 ),
               ],
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showNotificationSettingsDialog(BuildContext context) {
+    final theme = Theme.of(context);
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.blueAccent.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Icon(
+                Icons.notifications_active,
+                color: Colors.blueAccent,
+              ),
+            ),
+            const SizedBox(width: 12),
+            const Text('Notification Settings'),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.blue.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(Icons.bug_report, color: Colors.blue),
+              ),
+              title: const Text('Test Notifications'),
+              subtitle: const Text('Debug and test notification system'),
+              trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+              onTap: () {
+                Navigator.of(context).pop();
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const TestNotificationScreen(),
+                  ),
+                );
+              },
+            ),
+            const Divider(),
+            ListTile(
+              leading: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.orange.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(Icons.schedule, color: Colors.orange),
+              ),
+              title: const Text('Scheduled Reminders'),
+              subtitle: Consumer<HabitProvider>(
+                builder: (context, habitProvider, child) {
+                  final habitsWithReminders = habitProvider.activeHabits
+                      .where((h) => h.reminderTime != null)
+                      .length;
+                  return Text('$habitsWithReminders habit(s) have reminders set');
+                },
+              ),
+              trailing: const Icon(Icons.info_outline, size: 16),
+            ),
+            const Divider(),
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Text(
+                'You can set reminders when creating or editing habits. Each habit can have its own custom reminder time.',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurface.withOpacity(0.6),
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Close'),
           ),
         ],
       ),

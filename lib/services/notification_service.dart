@@ -1,53 +1,58 @@
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 
 class NotificationService {
-  static final NotificationService _notificationService = NotificationService._internal();
-
-  factory NotificationService() {
-    return _notificationService;
-  }
-
+  static final NotificationService _instance = NotificationService._internal();
+  factory NotificationService() => _instance;
   NotificationService._internal();
 
   final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
       FlutterLocalNotificationsPlugin();
 
-  // Define channel outside of methods to be accessible
-  static const String _channelId = 'daily_notification_channel_id';
-  static const String _channelName = 'Daily Reminders';
-  static const String _channelDescription = 'Channel for daily habit reminders';
+  static const String _channelId = "daily_notification_channel";
+  static const String _channelName = "Daily Notifications";
+  static const String _channelDescription = "Daily Habit Reminders";
+
+  // GENERATE A SAFE TIMEZONE FROM DEVICE OFFSET
+  String _safeLocalTimezone() {
+    final offset = DateTime.now().timeZoneOffset; // e.g. +5:30
+    final hours = offset.inHours; // 5
+    final minutes = offset.inMinutes.abs() % 60; // 30
+
+    // Convert IST → Etc/GMT-5.5   (this is correct mapping)
+    final sign = hours >= 0 ? '-' : '+';
+
+    if (minutes == 0) {
+      return "Etc/GMT$sign${hours.abs()}";
+    } else {
+      double decimal = hours.abs() + minutes / 60.0;
+      return "Etc/GMT$sign$decimal";
+    }
+  }
 
   Future<void> init() async {
-    final AndroidInitializationSettings initializationSettingsAndroid =
-        AndroidInitializationSettings('@mipmap/ic_launcher');
+    const androidInit = AndroidInitializationSettings('@mipmap/ic_launcher');
+    const iosInit = DarwinInitializationSettings();
 
-    final DarwinInitializationSettings initializationSettingsIOS =
-        DarwinInitializationSettings(
-      requestSoundPermission: false,
-      requestBadgePermission: false,
-      requestAlertPermission: false,
+    final settings = const InitializationSettings(
+      android: androidInit,
+      iOS: iosInit,
     );
 
-    final InitializationSettings initializationSettings =
-        InitializationSettings(
-      android: initializationSettingsAndroid,
-      iOS: initializationSettingsIOS,
-    );
-
+    // Timezone fix
     tz.initializeTimeZones();
+    String region = _safeLocalTimezone();
+    tz.setLocalLocation(tz.getLocation(region));
 
-    // Create the NotificationChannel
-    final AndroidNotificationChannel channel = AndroidNotificationChannel(
+    print("📍 Using SAFE timezone → $region");
+
+    final channel = const AndroidNotificationChannel(
       _channelId,
       _channelName,
       description: _channelDescription,
       importance: Importance.max,
-      playSound: true,
-      enableVibration: true,
     );
 
     await flutterLocalNotificationsPlugin
@@ -55,33 +60,62 @@ class NotificationService {
             AndroidFlutterLocalNotificationsPlugin>()
         ?.createNotificationChannel(channel);
 
-    await flutterLocalNotificationsPlugin.initialize(initializationSettings);
+    await flutterLocalNotificationsPlugin.initialize(settings);
   }
 
   Future<void> requestPermissions() async {
-    final IOSFlutterLocalNotificationsPlugin? iOSImplementation =
-        flutterLocalNotificationsPlugin.resolvePlatformSpecificImplementation<
+    final ios = flutterLocalNotificationsPlugin
+        .resolvePlatformSpecificImplementation<
             IOSFlutterLocalNotificationsPlugin>();
-    if (iOSImplementation != null) {
-      await iOSImplementation.requestPermissions(
-        alert: true,
-        badge: true,
-        sound: true,
-      );
+    if (ios != null) {
+      await ios.requestPermissions(alert: true, badge: true, sound: true);
     }
-    
-    final AndroidFlutterLocalNotificationsPlugin? androidImplementation =
-        flutterLocalNotificationsPlugin.resolvePlatformSpecificImplementation<
+
+    final android = flutterLocalNotificationsPlugin
+        .resolvePlatformSpecificImplementation<
             AndroidFlutterLocalNotificationsPlugin>();
-    if (androidImplementation != null) {
-      await androidImplementation.requestNotificationsPermission();
+    if (android != null) {
+      await android.requestNotificationsPermission();
     }
   }
 
-  Future<void> scheduleDailyNotification(int id, String title, String body, tz.TZDateTime scheduledDate) async {
-    if (kDebugMode) {
-      print('Scheduling notification with id: $id, title: $title, scheduledDate: $scheduledDate');
-    }
+  Future<void> cleanupOld() async {
+    await flutterLocalNotificationsPlugin.cancelAll();
+  }
+
+  Future<void> scheduleOneTimeNotification(
+    int id,
+    String title,
+    String body,
+    tz.TZDateTime date,
+  ) async {
+    await flutterLocalNotificationsPlugin.zonedSchedule(
+      id,
+      title,
+      body,
+      date,
+      NotificationDetails(
+        android: AndroidNotificationDetails(
+          _channelId,
+          _channelName,
+          importance: Importance.max,
+          priority: Priority.high,
+        ),
+        iOS: const DarwinNotificationDetails(),
+      ),
+      androidAllowWhileIdle: true,
+      uiLocalNotificationDateInterpretation:
+          UILocalNotificationDateInterpretation.absoluteTime,
+    );
+  }
+
+  // DAILY notification
+  Future<void> scheduleDailyNotification(
+    int id,
+    String title,
+    String body,
+    tz.TZDateTime scheduledDate,
+  ) async {
     await flutterLocalNotificationsPlugin.zonedSchedule(
       id,
       title,
@@ -89,45 +123,46 @@ class NotificationService {
       scheduledDate,
       NotificationDetails(
         android: AndroidNotificationDetails(
-          _channelId, // Use the channel ID defined above
+          _channelId,
           _channelName,
           channelDescription: _channelDescription,
-          importance: Importance.max, // Set importance
-          priority: Priority.high,   // Set priority
-          icon: '@mipmap/ic_launcher', // Ensure icon is specified
+          importance: Importance.max,
+          priority: Priority.high,
         ),
         iOS: const DarwinNotificationDetails(
-          sound: 'default.wav',
           presentAlert: true,
           presentBadge: true,
           presentSound: true,
         ),
       ),
+      matchDateTimeComponents: DateTimeComponents.time,
       androidAllowWhileIdle: true,
       uiLocalNotificationDateInterpretation:
           UILocalNotificationDateInterpretation.absoluteTime,
-      matchDateTimeComponents: DateTimeComponents.time,
     );
   }
 
   Future<void> sendTestNotification() async {
-    const AndroidNotificationDetails androidPlatformChannelSpecifics =
-        AndroidNotificationDetails(
-      _channelId,
-      _channelName,
-      channelDescription: _channelDescription,
-      importance: Importance.max,
-      priority: Priority.high,
-      showWhen: false,
-    );
-    const NotificationDetails platformChannelSpecifics =
-        NotificationDetails(android: androidPlatformChannelSpecifics);
     await flutterLocalNotificationsPlugin.show(
-      0,
+      999,
       'Test Notification',
-      'This is a test notification',
-      platformChannelSpecifics,
+      'This is a test',
+      const NotificationDetails(
+        android: AndroidNotificationDetails(
+          _channelId,
+          _channelName,
+          channelDescription: _channelDescription,
+          importance: Importance.max,
+        ),
+      ),
     );
+  }
+
+  // Clear old corrupted notifications
+  Future<void> cleanupOldCorruptedNotifications() async {
+    if (kDebugMode) print("🧹 Clearing old scheduled notifications...");
+    await flutterLocalNotificationsPlugin.cancelAll();
+    if (kDebugMode) print("✅ Cleanup done");
   }
 
   Future<void> cancelNotification(int id) async {
@@ -135,8 +170,6 @@ class NotificationService {
   }
 
   Future<List<PendingNotificationRequest>> getPendingNotificationRequests() async {
-    final List<PendingNotificationRequest> pendingNotificationRequests =
-        await flutterLocalNotificationsPlugin.pendingNotificationRequests();
-    return pendingNotificationRequests;
+    return await flutterLocalNotificationsPlugin.pendingNotificationRequests();
   }
 }
