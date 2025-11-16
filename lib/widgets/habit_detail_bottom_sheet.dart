@@ -7,7 +7,7 @@ import '../models/note.dart';
 import '../providers/auth_provider.dart';
 import '../providers/habit_provider.dart';
 import '../providers/note_provider.dart';
-import '../screens/habits/habit_detail_screen.dart';
+import '../screens/habits/add_habit_screen.dart';
 import 'habit_progress_ring.dart';
 import 'modern_button.dart';
 
@@ -113,14 +113,14 @@ class HabitDetailBottomSheet extends StatelessWidget {
                               Navigator.of(context).pop();
                               Navigator.of(context).push(
                                 MaterialPageRoute(
-                                  builder: (_) => HabitDetailScreen(
-                                    habit: latestHabit,
+                                  builder: (_) => AddHabitScreen(
+                                    habitToEdit: latestHabit,
                                   ),
                                 ),
                               );
                             },
-                            icon: const Icon(Icons.settings_outlined),
-                            label: const Text('Advanced options'),
+                            icon: const Icon(Icons.tune),
+                            label: const Text('Edit habit'),
                           ),
                         ],
                       ),
