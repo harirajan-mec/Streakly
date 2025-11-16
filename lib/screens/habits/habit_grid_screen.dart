@@ -2,11 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../models/habit.dart';
 import '../../providers/habit_provider.dart';
+import '../../widgets/habit_detail_bottom_sheet.dart';
 import '../../widgets/multi_completion_button.dart';
-import '../habits/habit_detail_screen.dart';
 import '../main/main_navigation.dart';
 import '../profile/profile_screen.dart';
-import '../../widgets/persistent_navigation_wrapper.dart';
 import '../../services/navigation_service.dart';
 import '../subscription/subscription_plans_screen.dart';
 import '../../providers/auth_provider.dart'; // Import AuthProvider
@@ -198,15 +197,7 @@ class _HabitGridScreenState extends State<HabitGridScreen> {
         color: Colors.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(20),
-          onTap: () {
-            Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (_) => PersistentNavigationWrapper(
-                  child: HabitDetailScreen(habit: habit),
-                ),
-              ),
-            );
-          },
+          onTap: () => HabitDetailBottomSheet.show(context, habit),
           onLongPress: () => _showDeleteConfirmationDialog(habit), // Add long-press for delete
           child: Container(
             padding: const EdgeInsets.all(12),

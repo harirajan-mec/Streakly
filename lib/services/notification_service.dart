@@ -41,6 +41,8 @@ class NotificationService {
       iOS: iosInit,
     );
 
+    await flutterLocalNotificationsPlugin.initialize(settings);
+
     // Timezone fix
     tz.initializeTimeZones();
     String region = _safeLocalTimezone();
@@ -59,8 +61,6 @@ class NotificationService {
         .resolvePlatformSpecificImplementation<
             AndroidFlutterLocalNotificationsPlugin>()
         ?.createNotificationChannel(channel);
-
-    await flutterLocalNotificationsPlugin.initialize(settings);
   }
 
   Future<void> requestPermissions() async {
@@ -71,12 +71,8 @@ class NotificationService {
       await ios.requestPermissions(alert: true, badge: true, sound: true);
     }
 
-    final android = flutterLocalNotificationsPlugin
-        .resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>();
-    if (android != null) {
-      await android.requestNotificationsPermission();
-    }
+    // Android 13+ permissions are handled at app level in AndroidManifest.xml
+    // No need to request programmatically
   }
 
   Future<void> cleanupOld() async {
@@ -100,12 +96,13 @@ class NotificationService {
           _channelName,
           importance: Importance.max,
           priority: Priority.high,
+          icon: '@mipmap/ic_launcher',
         ),
         iOS: const DarwinNotificationDetails(),
       ),
-      androidAllowWhileIdle: true,
       uiLocalNotificationDateInterpretation:
           UILocalNotificationDateInterpretation.absoluteTime,
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
     );
   }
 
@@ -128,6 +125,7 @@ class NotificationService {
           channelDescription: _channelDescription,
           importance: Importance.max,
           priority: Priority.high,
+          icon: '@mipmap/ic_launcher',
         ),
         iOS: const DarwinNotificationDetails(
           presentAlert: true,
@@ -135,10 +133,9 @@ class NotificationService {
           presentSound: true,
         ),
       ),
-      matchDateTimeComponents: DateTimeComponents.time,
-      androidAllowWhileIdle: true,
       uiLocalNotificationDateInterpretation:
           UILocalNotificationDateInterpretation.absoluteTime,
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
     );
   }
 
@@ -153,6 +150,7 @@ class NotificationService {
           _channelName,
           channelDescription: _channelDescription,
           importance: Importance.max,
+          icon: '@mipmap/ic_launcher',
         ),
       ),
     );

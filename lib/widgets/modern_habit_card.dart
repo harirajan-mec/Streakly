@@ -21,86 +21,104 @@ class ModernHabitCard extends StatelessWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    return Dismissible(
-      key: ValueKey(habit.id),
-      direction: DismissDirection.horizontal,
-      confirmDismiss: (direction) async {
-        if (direction == DismissDirection.endToStart) {
-          // Swipe left - Edit
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (_) => EditHabitScreen(habit: habit),
-            ),
-          );
-          return false; // Don't dismiss
-        } else if (direction == DismissDirection.startToEnd) {
-          // Swipe right - Quick complete (if not fully completed)
-          if (!isFullyCompleted) {
-            Provider.of<HabitProvider>(context, listen: false)
-                .toggleHabitCompletion(habit.id, context);
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Dismissible(
+        key: ValueKey(habit.id),
+        direction: DismissDirection.horizontal,
+        confirmDismiss: (direction) async {
+          if (direction == DismissDirection.endToStart) {
+            // Swipe left - Delete
+            final confirmed = await showDialog<bool>(
+              context: context,
+              builder: (context) => AlertDialog(
+                title: const Text('Delete Habit'),
+                content: Text('Are you sure you want to delete "${habit.name}"?'),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(false),
+                    child: const Text('Cancel'),
+                  ),
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(true),
+                    style: TextButton.styleFrom(foregroundColor: Colors.red),
+                    child: const Text('Delete'),
+                  ),
+                ],
+              ),
+            );
+            
+            if (confirmed == true) {
+              Provider.of<HabitProvider>(context, listen: false)
+                  .deleteHabit(habit.id);
+              return true; // Allow dismiss
+            }
+            return false; // Cancel dismiss
+          } else if (direction == DismissDirection.startToEnd) {
+            // Swipe right - Quick complete (if not fully completed)
+            if (!isFullyCompleted) {
+              Provider.of<HabitProvider>(context, listen: false)
+                  .toggleHabitCompletion(habit.id, context);
+            }
+            return false; // Don't dismiss
           }
-          return false; // Don't dismiss
-        }
-        return false;
-      },
-      background: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        decoration: BoxDecoration(
-          color: Colors.green,
-          borderRadius: BorderRadius.circular(16),
-        ),
-        alignment: Alignment.centerLeft,
-        padding: const EdgeInsets.only(left: 24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              isFullyCompleted ? Icons.check_circle : Icons.check_circle_outline,
-              color: Colors.white,
-              size: 32,
-            ),
-            const SizedBox(height: 4),
-            Text(
-              isFullyCompleted ? 'Completed' : 'Complete',
-              style: const TextStyle(
+          return false;
+        },
+        background: Container(
+          decoration: BoxDecoration(
+            color: Colors.green,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          alignment: Alignment.centerLeft,
+          padding: const EdgeInsets.only(left: 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                isFullyCompleted ? Icons.check_circle : Icons.check_circle_outline,
                 color: Colors.white,
-                fontWeight: FontWeight.bold,
-                fontSize: 12,
+                size: 32,
               ),
-            ),
-          ],
+              const SizedBox(height: 4),
+              Text(
+                isFullyCompleted ? 'Completed' : 'Complete',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12,
+                ),
+              ),
+            ],
+          ),
         ),
-      ),
-      secondaryBackground: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        decoration: BoxDecoration(
-          color: theme.colorScheme.primary,
-          borderRadius: BorderRadius.circular(16),
-        ),
-        alignment: Alignment.centerRight,
-        padding: const EdgeInsets.only(right: 24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: const [
-            Icon(
-              Icons.edit,
-              color: Colors.white,
-              size: 32,
-            ),
-            SizedBox(height: 4),
-            Text(
-              'Edit',
-              style: TextStyle(
+        secondaryBackground: Container(
+          decoration: BoxDecoration(
+            color: Colors.red,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          alignment: Alignment.centerRight,
+          padding: const EdgeInsets.only(right: 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: const [
+              Icon(
+                Icons.delete,
                 color: Colors.white,
-                fontWeight: FontWeight.bold,
-                fontSize: 12,
+                size: 32,
               ),
-            ),
-          ],
+              SizedBox(height: 4),
+              Text(
+                'Delete',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12,
+                ),
+              ),
+            ],
+          ),
         ),
-      ),
-      child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        child: Container(
         decoration: BoxDecoration(
           color: isDark ? const Color(0xFF1E1E1E) : const Color(0xFF2D2D2D),
           borderRadius: BorderRadius.circular(16),

@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:device_preview/device_preview.dart';
 import 'package:flutter/foundation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'screens/auth/splash_screen.dart';
 import 'providers/auth_provider.dart';
@@ -37,12 +38,26 @@ void main() async {
   final NotificationService notificationService = NotificationService();
 
   try {
+    // 🔥 CRITICAL FIX: Clear ALL corrupted notification data from SharedPreferences
+    print("🧹 Clearing corrupted notification storage...");
+    final prefs = await SharedPreferences.getInstance();
+    
+    // Remove all possible notification cache keys
+    final keys = prefs.getKeys();
+    for (final key in keys) {
+      if (key.contains('notification') || key.contains('flutter_local_notifications')) {
+        await prefs.remove(key);
+        print("Removed key: $key");
+      }
+    }
+    
+    print("✅ Corrupted storage cleared!");
+
     await notificationService.init();
     await notificationService.requestPermissions();
-
-    // 🔥 One-time cleanup of corrupted old notifications
-    await notificationService.cleanupOldCorruptedNotifications();
-    print('🧹 Old notifications cleaned');
+    
+    // Cancel any remaining notifications
+    await notificationService.flutterLocalNotificationsPlugin.cancelAll();
 
     print('✅ Notifications initialized');
   } catch (e) {

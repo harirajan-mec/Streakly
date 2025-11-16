@@ -1,5 +1,5 @@
 # This is a generated file; do not edit or check into version control.
-app_links=/home/codespace/.pub-cache/hosted/pub.dev/app_links-6.4.1/
+app_links=/home/codespace/.pub-cache/hosted/pub.dev/app_links-6.3.2/
 app_links_linux=/home/codespace/.pub-cache/hosted/pub.dev/app_links_linux-1.0.3/
 app_links_web=/home/codespace/.pub-cache/hosted/pub.dev/app_links_web-1.0.4/
 file_selector_linux=/home/codespace/.pub-cache/hosted/pub.dev/file_selector_linux-0.9.3+2/
@@ -12,6 +12,7 @@ firebase_messaging_web=/home/codespace/.pub-cache/hosted/pub.dev/firebase_messag
 flutter_local_notifications=/home/codespace/.pub-cache/hosted/pub.dev/flutter_local_notifications-17.2.4/
 flutter_local_notifications_linux=/home/codespace/.pub-cache/hosted/pub.dev/flutter_local_notifications_linux-4.0.1/
 flutter_plugin_android_lifecycle=/home/codespace/.pub-cache/hosted/pub.dev/flutter_plugin_android_lifecycle-2.0.26/
+flutter_timezone=/home/codespace/.pub-cache/hosted/pub.dev/flutter_timezone-1.0.8/
 google_mobile_ads=/home/codespace/.pub-cache/hosted/pub.dev/google_mobile_ads-5.3.1/
 gtk=/home/codespace/.pub-cache/hosted/pub.dev/gtk-2.1.0/
 image_picker=/home/codespace/.pub-cache/hosted/pub.dev/image_picker-1.1.2/

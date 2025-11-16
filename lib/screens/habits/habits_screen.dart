@@ -5,7 +5,6 @@ import '../../models/habit.dart';
 import '../../widgets/habit_progress_card.dart';
 import '../../widgets/modern_button.dart';
 import 'add_habit_screen.dart';
-import 'habit_detail_screen.dart';
 import '../main_navigation_screen.dart';
 import '../../services/navigation_service.dart';
 import '../profile/profile_screen.dart';
@@ -237,16 +236,7 @@ class _HabitsScreenState extends State<HabitsScreen> with WidgetsBindingObserver
           final habit = habits[index - 1];
           return Padding(
             padding: const EdgeInsets.only(bottom: 12),
-            child: GestureDetector(
-              onTap: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => HabitDetailScreen(habit: habit),
-                  ),
-                );
-              },
-              child: HabitProgressCard(habit: habit),
-            ),
+            child: HabitProgressCard(habit: habit),
           );
         },
       ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:timezone/timezone.dart' as tz;
 import '../../services/notification_service.dart';
 
@@ -241,9 +242,27 @@ class _TestNotificationScreenState extends State<TestNotificationScreen> {
                   'Activity Log',
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
-                TextButton(
-                  onPressed: () => setState(() => _logs.clear()),
-                  child: const Text('Clear'),
+                Row(
+                  children: [
+                    TextButton.icon(
+                      onPressed: _logs.isEmpty ? null : () {
+                        final allLogs = _logs.join('\n');
+                        Clipboard.setData(ClipboardData(text: allLogs));
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('All logs copied to clipboard!'),
+                            duration: Duration(seconds: 2),
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.copy, size: 18),
+                      label: const Text('Copy All'),
+                    ),
+                    TextButton(
+                      onPressed: () => setState(() => _logs.clear()),
+                      child: const Text('Clear'),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -272,18 +291,40 @@ class _TestNotificationScreenState extends State<TestNotificationScreen> {
                             : isSuccess
                                 ? Colors.green.withOpacity(0.1)
                                 : null,
-                        child: Padding(
-                          padding: const EdgeInsets.all(12),
-                          child: Text(
-                            log,
-                            style: TextStyle(
-                              fontFamily: 'monospace',
-                              fontSize: 12,
-                              color: isError
-                                  ? Colors.red
-                                  : isSuccess
-                                      ? Colors.green
-                                      : Colors.white70,
+                        child: InkWell(
+                          onLongPress: () {
+                            Clipboard.setData(ClipboardData(text: log));
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Log copied to clipboard!'),
+                                duration: Duration(seconds: 1),
+                              ),
+                            );
+                          },
+                          child: Padding(
+                            padding: const EdgeInsets.all(12),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    log,
+                                    style: TextStyle(
+                                      fontFamily: 'monospace',
+                                      fontSize: 12,
+                                      color: isError
+                                          ? Colors.red
+                                          : isSuccess
+                                              ? Colors.green
+                                              : Colors.white70,
+                                    ),
+                                  ),
+                                ),
+                                Icon(
+                                  Icons.copy,
+                                  size: 14,
+                                  color: Colors.grey.withOpacity(0.5),
+                                ),
+                              ],
                             ),
                           ),
                         ),

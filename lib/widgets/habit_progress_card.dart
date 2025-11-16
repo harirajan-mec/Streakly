@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
 import '../models/habit.dart';
-import '../screens/habits/habit_detail_screen.dart';
+import 'habit_detail_bottom_sheet.dart';
 import 'multi_completion_button.dart';
 
 class HabitProgressCard extends StatelessWidget {
   final Habit habit;
+  final VoidCallback? onPressed;
 
   const HabitProgressCard({
     super.key,
     required this.habit,
+    this.onPressed,
   });
 
   @override
@@ -33,13 +35,7 @@ class HabitProgressCard extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(18),
-          onTap: () {
-            Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (_) => HabitDetailScreen(habit: habit),
-              ),
-            );
-          },
+          onTap: onPressed ?? () => HabitDetailBottomSheet.show(context, habit),
           child: Padding(
             padding: const EdgeInsets.all(12.0),
             child: Row(
