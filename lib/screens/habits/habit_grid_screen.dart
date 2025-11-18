@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:lottie/lottie.dart';
 import 'package:provider/provider.dart';
 import '../../models/habit.dart';
 import '../../providers/habit_provider.dart';
 import '../../widgets/habit_detail_bottom_sheet.dart';
+import '../../widgets/habit_note_icon_button.dart';
 import '../../widgets/multi_completion_button.dart';
 import '../main/main_navigation.dart';
 import '../profile/profile_screen.dart';
@@ -36,16 +38,21 @@ class _HabitGridScreenState extends State<HabitGridScreen> {
       appBar: AppBar(
         backgroundColor: theme.colorScheme.surface.withOpacity(0.95),
         elevation: 0,
-        titleSpacing: 16,
+        titleSpacing: 0,
         automaticallyImplyLeading: false,
         title: Row(
           children: [
-            const Icon(
-              Icons.local_fire_department,
-              color: Color(0xFF4B0082),
-              size: 28,
+            const SizedBox(width: 16),
+            SizedBox(
+              height: 40,
+              width: 40,
+              child: Lottie.asset(
+                'assets/animations/Flame animation(1).json',
+                repeat: true,
+                fit: BoxFit.contain,
+              ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 8),
             Text(
               'Streakly',
               style: theme.textTheme.headlineSmall?.copyWith(
@@ -90,7 +97,8 @@ class _HabitGridScreenState extends State<HabitGridScreen> {
           builder: (context, habitProvider, child) {
             if (habitProvider.isLoading) {
               return Center(
-                child: CircularProgressIndicator(color: theme.colorScheme.primary),
+                child:
+                    CircularProgressIndicator(color: theme.colorScheme.primary),
               );
             }
 
@@ -100,7 +108,8 @@ class _HabitGridScreenState extends State<HabitGridScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Icon(Icons.track_changes,
-                        size: 80, color: theme.colorScheme.onSurface.withOpacity(0.3)),
+                        size: 80,
+                        color: theme.colorScheme.onSurface.withOpacity(0.3)),
                     const SizedBox(height: 16),
                     Text(
                       'No habits found',
@@ -132,8 +141,19 @@ class _HabitGridScreenState extends State<HabitGridScreen> {
                           final now = DateTime.now();
                           final day = now.day;
                           final monthNames = [
-                            '', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-                            'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+                            '',
+                            'Jan',
+                            'Feb',
+                            'Mar',
+                            'Apr',
+                            'May',
+                            'Jun',
+                            'Jul',
+                            'Aug',
+                            'Sep',
+                            'Oct',
+                            'Nov',
+                            'Dec'
                           ];
                           String getDaySuffix(int d) {
                             if (d >= 11 && d <= 13) return 'th';
@@ -148,15 +168,19 @@ class _HabitGridScreenState extends State<HabitGridScreen> {
                                 return 'th';
                             }
                           }
-                          final todayString = 'Today, $day${getDaySuffix(day)} ${monthNames[now.month]}';
+
+                          final todayString =
+                              'Today, $day${getDaySuffix(day)} ${monthNames[now.month]}';
                           return Padding(
-                            padding: const EdgeInsets.only(bottom: 14, left: 4, right: 4, top: 2),
+                            padding: const EdgeInsets.only(
+                                bottom: 14, left: 4, right: 4, top: 2),
                             child: Text.rich(
                               TextSpan(
                                 children: [
                                   TextSpan(
                                     text: 'Today, ',
-                                    style: theme.textTheme.headlineSmall?.copyWith(
+                                    style:
+                                        theme.textTheme.headlineSmall?.copyWith(
                                       fontWeight: FontWeight.w700,
                                       color: theme.colorScheme.onSurface,
                                       fontSize: 26,
@@ -164,9 +188,11 @@ class _HabitGridScreenState extends State<HabitGridScreen> {
                                   ),
                                   TextSpan(
                                     text: todayString.substring(7),
-                                    style: theme.textTheme.headlineSmall?.copyWith(
+                                    style:
+                                        theme.textTheme.headlineSmall?.copyWith(
                                       fontWeight: FontWeight.w400,
-                                      color: theme.colorScheme.primary.withOpacity(0.8),
+                                      color: theme.colorScheme.primary
+                                          .withOpacity(0.8),
                                       fontSize: 26,
                                     ),
                                   ),
@@ -198,13 +224,15 @@ class _HabitGridScreenState extends State<HabitGridScreen> {
         child: InkWell(
           borderRadius: BorderRadius.circular(20),
           onTap: () => HabitDetailBottomSheet.show(context, habit),
-          onLongPress: () => _showDeleteConfirmationDialog(habit), // Add long-press for delete
+          onLongPress: () =>
+              _showDeleteConfirmationDialog(habit), // Add long-press for delete
           child: Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
               color: theme.cardColor,
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: theme.colorScheme.outline.withOpacity(0.2)),
+              border:
+                  Border.all(color: theme.colorScheme.outline.withOpacity(0.2)),
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withOpacity(0.1),
@@ -274,7 +302,13 @@ class _HabitGridScreenState extends State<HabitGridScreen> {
                         ),
                       ],
                     ),
-                    MultiCompletionButton(habit: habit, size: 32),
+                    Row(
+                      children: [
+                        HabitNoteIconButton(habit: habit, size: 32),
+                        const SizedBox(width: 6),
+                        MultiCompletionButton(habit: habit, size: 32),
+                      ],
+                    ),
                   ],
                 ),
                 const SizedBox(height: 10),
@@ -311,7 +345,8 @@ class _HabitGridScreenState extends State<HabitGridScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 1),
                   child: Column(
                     children: List.generate(rows, (dayOfWeek) {
-                      final cellDate = startOfYear.add(Duration(days: (week * 7) + dayOfWeek));
+                      final cellDate = startOfYear
+                          .add(Duration(days: (week * 7) + dayOfWeek));
 
                       if (cellDate.year > now.year) {
                         return SizedBox(width: cellSize, height: cellSize);
@@ -328,7 +363,8 @@ class _HabitGridScreenState extends State<HabitGridScreen> {
                       } else if (cellDate.isAfter(now)) {
                         cellColor = habit.color.withOpacity(0.15);
                       } else {
-                        cellColor = theme.colorScheme.onSurface.withOpacity(0.1);
+                        cellColor =
+                            theme.colorScheme.onSurface.withOpacity(0.1);
                       }
 
                       final isToday = cellDate.day == now.day &&
@@ -345,7 +381,8 @@ class _HabitGridScreenState extends State<HabitGridScreen> {
                             color: cellColor,
                             borderRadius: BorderRadius.circular(2),
                             border: isToday
-                                ? Border.all(color: Colors.orangeAccent, width: 1.2)
+                                ? Border.all(
+                                    color: Colors.orangeAccent, width: 1.2)
                                 : null,
                           ),
                         ),
@@ -485,8 +522,12 @@ class _HabitGridScreenState extends State<HabitGridScreen> {
                 title: const Text('List View'),
                 subtitle: const Text('View habits as cards'),
                 trailing: Icon(
-                  !NavigationService.isGridViewMode ? Icons.check_circle : Icons.chevron_right,
-                  color: !NavigationService.isGridViewMode ? theme.colorScheme.primary : null,
+                  !NavigationService.isGridViewMode
+                      ? Icons.check_circle
+                      : Icons.chevron_right,
+                  color: !NavigationService.isGridViewMode
+                      ? theme.colorScheme.primary
+                      : null,
                 ),
                 onTap: () async {
                   Navigator.pop(context);
@@ -514,8 +555,12 @@ class _HabitGridScreenState extends State<HabitGridScreen> {
                 title: const Text('Grid View'),
                 subtitle: const Text('View habits with yearly progress'),
                 trailing: Icon(
-                  NavigationService.isGridViewMode ? Icons.check_circle : Icons.chevron_right,
-                  color: NavigationService.isGridViewMode ? theme.colorScheme.primary : null,
+                  NavigationService.isGridViewMode
+                      ? Icons.check_circle
+                      : Icons.chevron_right,
+                  color: NavigationService.isGridViewMode
+                      ? theme.colorScheme.primary
+                      : null,
                 ),
                 onTap: () {
                   Navigator.pop(context);

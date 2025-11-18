@@ -167,6 +167,14 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
     final notificationService = NotificationService();
     final isEditing = widget.habitToEdit != null;
     final habitId = widget.habitToEdit?.id ?? _uuid.v4();
+    final desiredName = _nameController.text.trim();
+
+    if (habitProvider.isHabitNameTaken(desiredName, excludeId: isEditing ? habitId : null)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Habit name already exists. Choose a unique name.')),
+      );
+      return;
+    }
     final notificationId = habitId.hashCode;
 
     if (_reminderTime != null) {

@@ -68,7 +68,7 @@ This will create:
 
 1. **Install Flutter dependencies:**
 ```bash
-cd /home/harirajan/Documents/Streakly/streakly_app
+cd /home/harirajan/Documents/Streakly/Streakly
 flutter pub get
 ```
 

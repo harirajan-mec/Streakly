@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../models/leaderboard_entry.dart';
+import '../../services/supabase_service.dart';
 
 class LeaderboardScreen extends StatefulWidget {
   const LeaderboardScreen({super.key});
@@ -8,19 +10,39 @@ class LeaderboardScreen extends StatefulWidget {
 }
 
 class _LeaderboardScreenState extends State<LeaderboardScreen> {
-  // Sample leaderboard data
-  final List<LeaderboardEntry> _leaderboardData = [
-    LeaderboardEntry(name: 'Sarah Johnson', score: 245, avatar: 'S', isCurrentUser: false),
-    LeaderboardEntry(name: 'Mike Chen', score: 198, avatar: 'M', isCurrentUser: false),
-    LeaderboardEntry(name: 'You', score: 156, avatar: 'Y', isCurrentUser: true),
-    LeaderboardEntry(name: 'Emma Wilson', score: 142, avatar: 'E', isCurrentUser: false),
-    LeaderboardEntry(name: 'David Brown', score: 128, avatar: 'D', isCurrentUser: false),
-    LeaderboardEntry(name: 'Lisa Garcia', score: 115, avatar: 'L', isCurrentUser: false),
-    LeaderboardEntry(name: 'Tom Anderson', score: 98, avatar: 'T', isCurrentUser: false),
-    LeaderboardEntry(name: 'Anna Martinez', score: 87, avatar: 'A', isCurrentUser: false),
-    LeaderboardEntry(name: 'John Smith', score: 76, avatar: 'J', isCurrentUser: false),
-    LeaderboardEntry(name: 'Kate Taylor', score: 65, avatar: 'K', isCurrentUser: false),
-  ];
+  final SupabaseService _supabaseService = SupabaseService.instance;
+  List<LeaderboardEntry> _leaderboardData = const <LeaderboardEntry>[];
+  bool _isLoading = true;
+  String? _errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadLeaderboard();
+  }
+
+  Future<void> _loadLeaderboard() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final results = await _supabaseService.getLeaderboardEntries(limit: 30);
+      if (!mounted) return;
+      setState(() {
+        _leaderboardData = results;
+        _isLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _leaderboardData = const <LeaderboardEntry>[];
+        _errorMessage = _mapError(e);
+        _isLoading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -58,9 +80,12 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
       body: Column(
         children: [
           _buildHeader(theme),
-          _buildTopThree(theme),
+          if (_leaderboardData.isNotEmpty) _buildTopThree(theme),
           Expanded(
-            child: _buildLeaderboardList(theme),
+            child: RefreshIndicator(
+              onRefresh: _loadLeaderboard,
+              child: _buildLeaderboardBody(theme),
+            ),
           ),
         ],
       ),
@@ -92,7 +117,8 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
               ),
               borderRadius: BorderRadius.circular(20),
             ),
-            child: const Icon(Icons.emoji_events, size: 36, color: Colors.amber),
+            child:
+                const Icon(Icons.emoji_events, size: 36, color: Colors.amber),
           ),
           const SizedBox(height: 16),
           Text(
@@ -115,25 +141,135 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
     );
   }
 
+  Widget _buildLeaderboardBody(ThemeData theme) {
+    if (_isLoading) {
+      return ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        children: const [
+          SizedBox(height: 160),
+          Center(child: CircularProgressIndicator()),
+        ],
+      );
+    }
+
+    if (_errorMessage != null) {
+      return ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.symmetric(horizontal: 24),
+        children: [
+          const SizedBox(height: 120),
+          _buildErrorState(theme),
+        ],
+      );
+    }
+
+    if (_leaderboardData.isEmpty) {
+      return ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.symmetric(horizontal: 24),
+        children: [
+          const SizedBox(height: 120),
+          _buildEmptyState(theme),
+        ],
+      );
+    }
+
+    return _buildLeaderboardList(theme);
+  }
+
+  Widget _buildEmptyState(ThemeData theme) {
+    return Column(
+      children: [
+        Icon(Icons.people_alt_outlined,
+            size: 64, color: theme.colorScheme.primary),
+        const SizedBox(height: 16),
+        Text(
+          'No leaderboard data yet',
+          style: theme.textTheme.titleMedium
+              ?.copyWith(fontWeight: FontWeight.w700),
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'Complete habits to start ranking globally.',
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: theme.colorScheme.onSurface.withOpacity(0.6),
+          ),
+          textAlign: TextAlign.center,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildErrorState(ThemeData theme) {
+    return Column(
+      children: [
+        Icon(Icons.error_outline, size: 64, color: theme.colorScheme.error),
+        const SizedBox(height: 16),
+        Text(
+          'Unable to load leaderboard',
+          style: theme.textTheme.titleMedium
+              ?.copyWith(fontWeight: FontWeight.w700),
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 8),
+        Text(
+          _errorMessage ?? 'Something went wrong. Please try again.',
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: theme.colorScheme.onSurface.withOpacity(0.6),
+          ),
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 20),
+        FilledButton.icon(
+          onPressed: _loadLeaderboard,
+          icon: const Icon(Icons.refresh),
+          label: const Text('Try Again'),
+        ),
+      ],
+    );
+  }
+
+  String _mapError(dynamic error) {
+    final message = error.toString();
+    if (message.contains('Failed host lookup') ||
+        message.contains('SocketException') ||
+        message.contains('Connection refused')) {
+      return 'Check your internet connection and try again.';
+    }
+    if (message.contains('permission denied')) {
+      return 'You do not have access to view the global leaderboard yet.';
+    }
+    return message;
+  }
+
   Widget _buildTopThree(ThemeData theme) {
     final topThree = _leaderboardData.take(3).toList();
-    
+    if (topThree.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          if (topThree.length > 1) _buildPodiumItem(theme, topThree[1], 2, Colors.grey),
-          if (topThree.isNotEmpty) _buildPodiumItem(theme, topThree[0], 1, Colors.amber),
-          if (topThree.length > 2) _buildPodiumItem(theme, topThree[2], 3, Colors.brown),
+          if (topThree.length > 1)
+            _buildPodiumItem(theme, topThree[1], 2, Colors.grey),
+          if (topThree.isNotEmpty)
+            _buildPodiumItem(theme, topThree[0], 1, Colors.amber),
+          if (topThree.length > 2)
+            _buildPodiumItem(theme, topThree[2], 3, Colors.brown),
         ],
       ),
     );
   }
 
-  Widget _buildPodiumItem(ThemeData theme, LeaderboardEntry entry, int position, Color color) {
+  Widget _buildPodiumItem(
+      ThemeData theme, LeaderboardEntry entry, int position, Color color) {
     final isFirst = position == 1;
-    
+    final isCurrentUser = _isCurrentUser(entry);
+
     return Column(
       children: [
         Stack(
@@ -145,10 +281,12 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
               decoration: BoxDecoration(
                 color: Theme.of(context).cardColor,
                 borderRadius: BorderRadius.circular(isFirst ? 44 : 33),
-                border: Border.all(color: Theme.of(context).colorScheme.outline.withOpacity(0.2)),
+                border: Border.all(
+                    color:
+                        Theme.of(context).colorScheme.outline.withOpacity(0.2)),
                 boxShadow: [
                   BoxShadow(
-                    color: entry.isCurrentUser
+                    color: isCurrentUser
                         ? theme.colorScheme.primary.withOpacity(0.4)
                         : color.withOpacity(0.2),
                     blurRadius: 16,
@@ -159,14 +297,14 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
               child: Container(
                 margin: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
-                  color: entry.isCurrentUser
+                  color: isCurrentUser
                       ? theme.colorScheme.primary
                       : color.withOpacity(0.22),
                   borderRadius: BorderRadius.circular(isFirst ? 38 : 28),
                 ),
                 child: Center(
                   child: Text(
-                    entry.avatar,
+                    entry.displayAvatar,
                     style: TextStyle(
                       fontSize: isFirst ? 30 : 22,
                       fontWeight: FontWeight.bold,
@@ -204,7 +342,9 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
           entry.name,
           style: theme.textTheme.bodyMedium?.copyWith(
             fontWeight: FontWeight.w600,
-            color: entry.isCurrentUser ? theme.colorScheme.primary : theme.colorScheme.onSurface,
+            color: isCurrentUser
+                ? theme.colorScheme.primary
+                : theme.colorScheme.onSurface,
           ),
           textAlign: TextAlign.center,
         ),
@@ -229,6 +369,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
         border: Border.all(color: theme.colorScheme.outline.withOpacity(0.2)),
       ),
       child: ListView.separated(
+        physics: const AlwaysScrollableScrollPhysics(),
         itemCount: _leaderboardData.length,
         separatorBuilder: (context, index) => Divider(
           color: theme.colorScheme.outline.withOpacity(0.2),
@@ -237,16 +378,24 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
         itemBuilder: (context, index) {
           final entry = _leaderboardData[index];
           final position = index + 1;
+          final isCurrentUser = _isCurrentUser(entry);
+          final subtitle = isCurrentUser
+              ? 'You'
+              : (entry.email.isNotEmpty ? entry.email : 'Habit Builder');
 
           return Container(
             decoration: BoxDecoration(
-              color: entry.isCurrentUser
+              color: isCurrentUser
                   ? theme.colorScheme.primary.withOpacity(0.14)
                   : Colors.transparent,
               borderRadius: index == 0
-                  ? const BorderRadius.only(topLeft: Radius.circular(22), topRight: Radius.circular(22))
+                  ? const BorderRadius.only(
+                      topLeft: Radius.circular(22),
+                      topRight: Radius.circular(22))
                   : index == _leaderboardData.length - 1
-                      ? const BorderRadius.only(bottomLeft: Radius.circular(22), bottomRight: Radius.circular(22))
+                      ? const BorderRadius.only(
+                          bottomLeft: Radius.circular(22),
+                          bottomRight: Radius.circular(22))
                       : null,
             ),
             child: Padding(
@@ -268,18 +417,21 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                     width: 44,
                     height: 44,
                     decoration: BoxDecoration(
-                      color: entry.isCurrentUser
+                      color: isCurrentUser
                           ? theme.colorScheme.primary
                           : theme.colorScheme.surfaceContainerHighest,
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: theme.colorScheme.outline.withOpacity(0.1)),
+                      border: Border.all(
+                          color: theme.colorScheme.outline.withOpacity(0.1)),
                     ),
                     alignment: Alignment.center,
                     child: Text(
-                      entry.avatar,
+                      entry.displayAvatar,
                       style: theme.textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
-                        color: entry.isCurrentUser ? Colors.white : Colors.white.withOpacity(0.8),
+                        color: isCurrentUser
+                            ? Colors.white
+                            : Colors.white.withOpacity(0.8),
                       ),
                     ),
                   ),
@@ -292,12 +444,14 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                           entry.name,
                           style: theme.textTheme.titleMedium?.copyWith(
                             color: theme.colorScheme.onSurface,
-                            fontWeight: entry.isCurrentUser ? FontWeight.w700 : FontWeight.w500,
+                            fontWeight: isCurrentUser
+                                ? FontWeight.w700
+                                : FontWeight.w500,
                           ),
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          entry.isCurrentUser ? 'You' : 'Habit Builder',
+                          subtitle,
                           style: theme.textTheme.bodySmall?.copyWith(
                             color: theme.colorScheme.onSurface.withOpacity(0.6),
                           ),
@@ -307,14 +461,16 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                   ),
                   const SizedBox(width: 12),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     decoration: BoxDecoration(
                       color: Colors.orange.withOpacity(0.16),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Row(
                       children: [
-                        const Icon(Icons.local_fire_department, size: 16, color: Colors.orangeAccent),
+                        const Icon(Icons.local_fire_department,
+                            size: 16, color: Colors.orangeAccent),
                         const SizedBox(width: 6),
                         Text(
                           '${entry.score}',
@@ -347,18 +503,9 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
         return Colors.white;
     }
   }
-}
 
-class LeaderboardEntry {
-  final String name;
-  final int score;
-  final String avatar;
-  final bool isCurrentUser;
-
-  LeaderboardEntry({
-    required this.name,
-    required this.score,
-    required this.avatar,
-    required this.isCurrentUser,
-  });
+  bool _isCurrentUser(LeaderboardEntry entry) {
+    final currentUserId = _supabaseService.currentUserId;
+    return currentUserId != null && entry.userId == currentUserId;
+  }
 }

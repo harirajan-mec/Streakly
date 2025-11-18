@@ -267,6 +267,8 @@ class ModernHabitCard extends StatelessWidget {
       days.add(startDate.add(Duration(days: i)));
     }
 
+    final orderedDays = days.reversed.toList(); // Recent dates should appear first visually.
+
     return LayoutBuilder(
       builder: (context, constraints) {
         // Calculate how many cells can fit in a row
@@ -278,7 +280,8 @@ class ModernHabitCard extends StatelessWidget {
         return Wrap(
           spacing: spacing,
           runSpacing: spacing,
-          children: days.map((day) => _buildDayCell(day, now, cellSize)).toList(),
+          textDirection: TextDirection.ltr,
+          children: orderedDays.map((day) => _buildDayCell(day, now, cellSize)).toList(),
         );
       },
     );

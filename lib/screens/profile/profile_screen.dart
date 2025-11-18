@@ -11,7 +11,6 @@ import '../auth/login_screen.dart';
 import 'analysis_screen.dart';
 import '../subscription/subscription_plans_screen.dart';
 import 'leaderboard_screen.dart';
-import '../../widgets/avatar_picker.dart';
 import '../../widgets/hero_stats_card.dart';
 import '../reminders/test_notification_screen.dart';
 
@@ -66,8 +65,6 @@ class ProfileScreen extends StatelessWidget {
         ),
         child: Column(
           children: [
-            _buildProfileHeader(context),
-            const SizedBox(height: 20),
             _buildHeroStatsCard(context),
             const SizedBox(height: 20),
             _buildMenuSection(context),
@@ -77,114 +74,16 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildProfileHeader(BuildContext context) {
-    return Consumer<AuthProvider>(
-      builder: (context, authProvider, child) {
-        final theme = Theme.of(context);
-        
-        return Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: theme.cardColor,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: theme.colorScheme.outline.withOpacity(0.2)),
-          ),
-          child: Column(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      Theme.of(context).colorScheme.primary,
-                      Theme.of(context).colorScheme.primary.withOpacity(0.5),
-                    ],
-                  ),
-                  borderRadius: BorderRadius.circular(60),
-                ),
-                child: GestureDetector(
-                  onTap: () => _showAvatarPicker(context),
-                  child: Builder(
-                    builder: (context) {
-                      // Debug logging
-                      print('🎭 Current avatar: ${authProvider.userAvatar}');
-                      print('👤 Current user: ${authProvider.currentUser?.toJson()}');
-                      
-                      return CircleAvatar(
-                        radius: 32,
-                        backgroundColor: Colors.black.withOpacity(0.4),
-                        child: authProvider.userAvatar != null
-                            ? Text(
-                                authProvider.userAvatar!,
-                                style: const TextStyle(fontSize: 32),
-                              )
-                            : Text(
-                                authProvider.userName?.substring(0, 1).toUpperCase() ?? 'U',
-                                style: const TextStyle(
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                ),
-                              ),
-                      );
-                    }
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                authProvider.userName ?? 'User',
-                style: theme.textTheme.headlineSmall?.copyWith(
-                      color: theme.colorScheme.onSurface,
-                      fontWeight: FontWeight.w800,
-                    ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                authProvider.userEmail ?? '',
-                style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.onSurface.withOpacity(0.6),
-                    ),
-              ),
-              const SizedBox(height: 10),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                decoration: BoxDecoration(
-                  color: Colors.orange.withOpacity(0.16),
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(Icons.local_fire_department, color: Colors.orange, size: 18),
-                    const SizedBox(width: 6),
-                    Text(
-                      'Habit Builder',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Colors.orangeAccent,
-                            fontWeight: FontWeight.w600,
-                          ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
   Widget _buildHeroStatsCard(BuildContext context) {
     return Consumer<HabitProvider>(
       builder: (context, habitProvider, child) {
         // Calculate current streak
         int currentStreak = _calculateCurrentAllHabitsStreak(habitProvider);
-        
+
         // Calculate weekly completion percentage
-        int weeklyCompletionPercentage = _calculateWeeklyCompletionPercentage(habitProvider);
-        
+        int weeklyCompletionPercentage =
+            _calculateWeeklyCompletionPercentage(habitProvider);
+
         return HeroStatsCard(
           currentStreak: currentStreak,
           weeklyCompletionPercentage: weeklyCompletionPercentage,
@@ -197,34 +96,35 @@ class ProfileScreen extends StatelessWidget {
   int _calculateWeeklyCompletionPercentage(HabitProvider habitProvider) {
     final activeHabits = habitProvider.activeHabits;
     if (activeHabits.isEmpty) return 0;
-    
+
     final today = DateTime.now();
     int totalPossibleCompletions = 0;
     int actualCompletions = 0;
-    
+
     // Check last 7 days
     for (int daysBack = 0; daysBack < 7; daysBack++) {
       final checkDate = today.subtract(Duration(days: daysBack));
-      
+
       // Get habits that existed on this date
-      List<Habit> habitsOnDate = activeHabits.where((habit) => 
-          !habit.createdAt.isAfter(checkDate)).toList();
-      
+      List<Habit> habitsOnDate = activeHabits
+          .where((habit) => !habit.createdAt.isAfter(checkDate))
+          .toList();
+
       totalPossibleCompletions += habitsOnDate.length;
-      
+
       // Count completions on this date
       for (var habit in habitsOnDate) {
         bool habitCompleted = habit.completedDates.any((date) =>
             date.year == checkDate.year &&
             date.month == checkDate.month &&
             date.day == checkDate.day);
-        
+
         if (habitCompleted) {
           actualCompletions++;
         }
       }
     }
-    
+
     if (totalPossibleCompletions == 0) return 0;
     return ((actualCompletions / totalPossibleCompletions) * 100).round();
   }
@@ -233,14 +133,15 @@ class ProfileScreen extends StatelessWidget {
     return Consumer<HabitProvider>(
       builder: (context, habitProvider, child) {
         // Ensure we have a valid habit provider
-        int currentAllHabitsStreak = _calculateCurrentAllHabitsStreak(habitProvider);
-        
+        int currentAllHabitsStreak =
+            _calculateCurrentAllHabitsStreak(habitProvider);
+
         // Calculate best all-habits streak in history
         int bestAllHabitsStreak = _calculateBestAllHabitsStreak(habitProvider);
-        
+
         // Calculate score: +50 points for each day ALL habits were completed
         int score = _calculateTotalScore(habitProvider);
-        
+
         return IntrinsicHeight(
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -413,6 +314,51 @@ class ProfileScreen extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 16),
+        Consumer<HabitProvider>(
+          builder: (context, habitProvider, child) {
+            final totalScore = _calculateCompletionScore(habitProvider);
+            final totalCompletions = totalScore ~/ 10;
+
+            return Column(
+              children: [
+                _buildMenuCard(
+                  context,
+                  [
+                    _buildMenuItem(
+                      context,
+                      title: 'Scoreboard',
+                      subtitle: 'See points earned from completions',
+                      icon: Icons.emoji_events,
+                      iconColor: Colors.orangeAccent,
+                      onTap: () => _showScoreboardDialog(
+                        context,
+                        totalScore,
+                        totalCompletions,
+                      ),
+                      trailing: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: Colors.orangeAccent.withOpacity(0.18),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Text(
+                          '$totalScore pts',
+                          style:
+                              Theme.of(context).textTheme.labelMedium?.copyWith(
+                                    color: Colors.orangeAccent,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+              ],
+            );
+          },
+        ),
         _buildMenuCard(
           context,
           [
@@ -428,7 +374,7 @@ class ProfileScreen extends StatelessWidget {
             ),
           ],
         ),
-         const SizedBox(height: 16),
+        const SizedBox(height: 16),
         // Modified "Share App" Menu Item
         _buildMenuCard(
           context,
@@ -531,7 +477,7 @@ class ProfileScreen extends StatelessWidget {
 
   Widget _buildMenuCard(BuildContext context, List<Widget> children) {
     final theme = Theme.of(context);
-    
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 4),
@@ -544,14 +490,13 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildMenuItem(
-    BuildContext context,
-    {required String title,
-    required String subtitle,
-    required IconData icon,
-    required Color iconColor,
-    required VoidCallback onTap,
-    Widget? trailing}) {
+  Widget _buildMenuItem(BuildContext context,
+      {required String title,
+      required String subtitle,
+      required IconData icon,
+      required Color iconColor,
+      required VoidCallback onTap,
+      Widget? trailing}) {
     final theme = Theme.of(context);
 
     return InkWell(
@@ -596,7 +541,9 @@ class ProfileScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 8),
-            trailing ?? Icon(Icons.chevron_right, color: theme.colorScheme.onSurface.withOpacity(0.4)),
+            trailing ??
+                Icon(Icons.chevron_right,
+                    color: theme.colorScheme.onSurface.withOpacity(0.4)),
           ],
         ),
       ),
@@ -606,7 +553,7 @@ class ProfileScreen extends StatelessWidget {
   // MODIFIED DIALOG FOR SHARING THE APP
   void _showShareDialog(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -622,7 +569,8 @@ class ProfileScreen extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            const Icon(Icons.local_fire_department, color: Colors.orange, size: 40),
+            const Icon(Icons.local_fire_department,
+                color: Colors.orange, size: 40),
             const SizedBox(height: 16),
             Text(
               'Enjoying Streakly? Share it with your friends and help them build great habits too!',
@@ -644,9 +592,11 @@ class ProfileScreen extends StatelessWidget {
               onPressed: () {
                 // IMPORTANT: Replace with your actual package name
                 const appPackageName = 'your.package.name';
-                const appLink = 'https://play.google.com/store/apps/details?id=$appPackageName';
-                
-                final shareText = 'Check out Streakly, a great app for building habits! You can download it here: $appLink';
+                const appLink =
+                    'https://play.google.com/store/apps/details?id=$appPackageName';
+
+                final shareText =
+                    'Check out Streakly, a great app for building habits! You can download it here: $appLink';
                 Share.share(shareText);
               },
               style: FilledButton.styleFrom(
@@ -687,8 +637,8 @@ class ProfileScreen extends StatelessWidget {
                 Text(
                   'Data Collection',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+                        fontWeight: FontWeight.bold,
+                      ),
                 ),
                 const SizedBox(height: 8),
                 const Text(
@@ -702,8 +652,8 @@ class ProfileScreen extends StatelessWidget {
                 Text(
                   'Data Usage',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+                        fontWeight: FontWeight.bold,
+                      ),
                 ),
                 const SizedBox(height: 8),
                 const Text(
@@ -717,8 +667,8 @@ class ProfileScreen extends StatelessWidget {
                 Text(
                   'Data Security',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+                        fontWeight: FontWeight.bold,
+                      ),
                 ),
                 const SizedBox(height: 8),
                 const Text(
@@ -764,8 +714,8 @@ class ProfileScreen extends StatelessWidget {
                 Text(
                   'Acceptance of Terms',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+                        fontWeight: FontWeight.bold,
+                      ),
                 ),
                 const SizedBox(height: 8),
                 const Text(
@@ -776,8 +726,8 @@ class ProfileScreen extends StatelessWidget {
                 Text(
                   'User Responsibilities',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+                        fontWeight: FontWeight.bold,
+                      ),
                 ),
                 const SizedBox(height: 8),
                 const Text(
@@ -791,8 +741,8 @@ class ProfileScreen extends StatelessWidget {
                 Text(
                   'Service Availability',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+                        fontWeight: FontWeight.bold,
+                      ),
                 ),
                 const SizedBox(height: 8),
                 const Text(
@@ -803,8 +753,8 @@ class ProfileScreen extends StatelessWidget {
                 Text(
                   'Limitation of Liability',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+                        fontWeight: FontWeight.bold,
+                      ),
                 ),
                 const SizedBox(height: 8),
                 const Text(
@@ -828,38 +778,39 @@ class ProfileScreen extends StatelessWidget {
   int _calculateCurrentAllHabitsStreak(HabitProvider habitProvider) {
     final activeHabits = habitProvider.activeHabits;
     if (activeHabits.isEmpty) return 0;
-    
+
     int streak = 0;
     final today = DateTime.now();
     bool streakStarted = false;
-    
+
     // Check each day going backwards from today
     for (int daysBack = 0; daysBack < 365; daysBack++) {
       final checkDate = today.subtract(Duration(days: daysBack));
       bool allHabitsCompleted = true;
-      
+
       // Get habits that existed on this date
-      List<Habit> habitsOnDate = activeHabits.where((habit) => 
-          !habit.createdAt.isAfter(checkDate)).toList();
-      
+      List<Habit> habitsOnDate = activeHabits
+          .where((habit) => !habit.createdAt.isAfter(checkDate))
+          .toList();
+
       if (habitsOnDate.isEmpty) {
         // No habits existed on this date, skip
         continue;
       }
-      
+
       // Check if ALL habits that existed were completed on this date
       for (var habit in habitsOnDate) {
         bool habitCompleted = habit.completedDates.any((date) =>
             date.year == checkDate.year &&
             date.month == checkDate.month &&
             date.day == checkDate.day);
-        
+
         if (!habitCompleted) {
           allHabitsCompleted = false;
           break;
         }
       }
-      
+
       if (allHabitsCompleted) {
         streak++;
         streakStarted = true;
@@ -871,18 +822,18 @@ class ProfileScreen extends StatelessWidget {
         break; // Streak is broken
       }
     }
-    
+
     return streak;
   }
 
   int _calculateBestAllHabitsStreak(HabitProvider habitProvider) {
     final activeHabits = habitProvider.activeHabits;
     if (activeHabits.isEmpty) return 0;
-    
+
     int bestStreak = 0;
     int currentStreak = 0;
     final today = DateTime.now();
-    
+
     // Find the earliest habit creation date
     DateTime earliestDate = today;
     for (var habit in activeHabits) {
@@ -890,34 +841,37 @@ class ProfileScreen extends StatelessWidget {
         earliestDate = habit.createdAt;
       }
     }
-    
+
     // Check every day from earliest habit creation to today
-    for (int daysFromStart = 0; daysFromStart <= today.difference(earliestDate).inDays; daysFromStart++) {
+    for (int daysFromStart = 0;
+        daysFromStart <= today.difference(earliestDate).inDays;
+        daysFromStart++) {
       final checkDate = earliestDate.add(Duration(days: daysFromStart));
       bool allHabitsCompleted = true;
-      
+
       // Get habits that existed on this date
-      List<Habit> habitsOnDate = activeHabits.where((habit) => 
-          !habit.createdAt.isAfter(checkDate)).toList();
-      
+      List<Habit> habitsOnDate = activeHabits
+          .where((habit) => !habit.createdAt.isAfter(checkDate))
+          .toList();
+
       if (habitsOnDate.isEmpty) {
         currentStreak = 0;
         continue;
       }
-      
+
       // Check if ALL habits that existed were completed on this date
       for (var habit in habitsOnDate) {
         bool habitCompleted = habit.completedDates.any((date) =>
             date.year == checkDate.year &&
             date.month == checkDate.month &&
             date.day == checkDate.day);
-        
+
         if (!habitCompleted) {
           allHabitsCompleted = false;
           break;
         }
       }
-      
+
       if (allHabitsCompleted) {
         currentStreak++;
         if (currentStreak > bestStreak) {
@@ -927,7 +881,7 @@ class ProfileScreen extends StatelessWidget {
         currentStreak = 0;
       }
     }
-    
+
     return bestStreak;
   }
 
@@ -964,9 +918,11 @@ class ProfileScreen extends StatelessWidget {
           children: [
             Text('Version 1.0.0', style: theme.textTheme.bodySmall),
             const SizedBox(height: 16),
-            const Text('Streakly helps you build better habits and maintain consistency in your daily routines.'),
+            const Text(
+                'Streakly helps you build better habits and maintain consistency in your daily routines.'),
             const SizedBox(height: 12),
-            const Text('Built with Flutter and designed for habit enthusiasts.'),
+            const Text(
+                'Built with Flutter and designed for habit enthusiasts.'),
           ],
         ),
         actions: [
@@ -1040,35 +996,38 @@ class ProfileScreen extends StatelessWidget {
             onPressed: () => Navigator.of(context).pop(),
             child: Text(
               'Cancel',
-              style: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.6)),
+              style: TextStyle(
+                  color: theme.colorScheme.onSurface.withOpacity(0.6)),
             ),
           ),
           FilledButton(
             onPressed: () {
               final email = emailController.text.trim();
               final message = messageController.text.trim();
-              
+
               if (email.isEmpty || !email.contains('@')) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Please enter a valid email address')),
+                  const SnackBar(
+                      content: Text('Please enter a valid email address')),
                 );
                 return;
               }
-              
+
               if (message.isEmpty) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('Please enter your message')),
                 );
                 return;
               }
-              
+
               // Launch email client with pre-filled content
               final Uri emailUri = Uri(
                 scheme: 'mailto',
                 path: 'habitmakerc@gmail.com',
-                query: 'subject=Streakly Support Request&body=${Uri.encodeComponent(message)}\n\nFrom: $email',
+                query:
+                    'subject=Streakly Support Request&body=${Uri.encodeComponent(message)}\n\nFrom: $email',
               );
-              
+
               launchUrl(emailUri).then((_) {
                 Navigator.of(context).pop();
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -1080,7 +1039,8 @@ class ProfileScreen extends StatelessWidget {
               }).catchError((_) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
-                    content: Text('Could not open email client. Please send your message to habitmakerc@gmail.com'),
+                    content: Text(
+                        'Could not open email client. Please send your message to habitmakerc@gmail.com'),
                     duration: Duration(seconds: 4),
                   ),
                 );
@@ -1095,36 +1055,6 @@ class ProfileScreen extends StatelessWidget {
       emailController.dispose();
       messageController.dispose();
     });
-  }
-
-  void _showAvatarPicker(BuildContext context) {
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    
-    showDialog(
-      context: context,
-      builder: (context) => Dialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: AvatarPicker(
-          currentAvatar: authProvider.userAvatar,
-          onAvatarSelected: (emoji, color) async {
-            final success = await authProvider.updateAvatar(emoji, color);
-            if (!context.mounted) return;
-            
-            if (success) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Avatar updated successfully!')),
-              );
-            } else {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(authProvider.errorMessage ?? 'Failed to update avatar')),
-              );
-            }
-          },
-        ),
-      ),
-    );
   }
 
   void _showSignOutDialog(BuildContext context) {
@@ -1153,7 +1083,8 @@ class ProfileScreen extends StatelessWidget {
                     text: 'Sign Out',
                     type: ModernButtonType.destructive,
                     onPressed: () {
-                      Provider.of<AuthProvider>(context, listen: false).logout();
+                      Provider.of<AuthProvider>(context, listen: false)
+                          .logout();
                       Navigator.of(context).pushAndRemoveUntil(
                         MaterialPageRoute(builder: (_) => const LoginScreen()),
                         (route) => false,
@@ -1163,6 +1094,105 @@ class ProfileScreen extends StatelessWidget {
                 ),
               ],
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showScoreboardDialog(
+    BuildContext context,
+    int totalScore,
+    int totalCompletions,
+  ) {
+    final theme = Theme.of(context);
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.orangeAccent.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Icon(
+                Icons.emoji_events,
+                color: Colors.orangeAccent,
+              ),
+            ),
+            const SizedBox(width: 12),
+            const Text('Scoreboard'),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'Total Score',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurface.withOpacity(0.7),
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              '$totalScore pts',
+              style: theme.textTheme.displaySmall?.copyWith(
+                fontWeight: FontWeight.w800,
+                color: Colors.orangeAccent,
+              ),
+            ),
+            const SizedBox(height: 20),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surfaceVariant.withOpacity(0.6),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Habit Completions',
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '$totalCompletions total',
+                    style: theme.textTheme.headlineSmall,
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: const [
+                      Icon(Icons.add, size: 16, color: Colors.orangeAccent),
+                      SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          'Every completion adds 10 points to your score.',
+                          style: TextStyle(fontSize: 13),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Close'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Keep Going'),
           ),
         ],
       ),
@@ -1233,7 +1263,8 @@ class ProfileScreen extends StatelessWidget {
                   final habitsWithReminders = habitProvider.activeHabits
                       .where((h) => h.reminderTime != null)
                       .length;
-                  return Text('$habitsWithReminders habit(s) have reminders set');
+                  return Text(
+                      '$habitsWithReminders habit(s) have reminders set');
                 },
               ),
               trailing: const Icon(Icons.info_outline, size: 16),
@@ -1264,10 +1295,10 @@ class ProfileScreen extends StatelessWidget {
   int _calculateTotalScore(HabitProvider habitProvider) {
     final activeHabits = habitProvider.activeHabits;
     if (activeHabits.isEmpty) return 0;
-    
+
     int totalScore = 0;
     final today = DateTime.now();
-    
+
     // Find the earliest habit creation date
     DateTime earliestDate = today;
     for (var habit in activeHabits) {
@@ -1275,39 +1306,59 @@ class ProfileScreen extends StatelessWidget {
         earliestDate = habit.createdAt;
       }
     }
-    
+
     // Check every day from earliest habit creation to today
-    for (int daysFromStart = 0; daysFromStart <= today.difference(earliestDate).inDays; daysFromStart++) {
+    for (int daysFromStart = 0;
+        daysFromStart <= today.difference(earliestDate).inDays;
+        daysFromStart++) {
       final checkDate = earliestDate.add(Duration(days: daysFromStart));
       bool allHabitsCompleted = true;
-      
+
       // Get habits that existed on this date
-      List<Habit> habitsOnDate = activeHabits.where((habit) => 
-          !habit.createdAt.isAfter(checkDate)).toList();
-      
+      List<Habit> habitsOnDate = activeHabits
+          .where((habit) => !habit.createdAt.isAfter(checkDate))
+          .toList();
+
       if (habitsOnDate.isEmpty) {
         continue;
       }
-      
+
       // Check if ALL habits that existed were completed on this date
       for (var habit in habitsOnDate) {
         bool habitCompleted = habit.completedDates.any((date) =>
             date.year == checkDate.year &&
             date.month == checkDate.month &&
             date.day == checkDate.day);
-        
+
         if (!habitCompleted) {
           allHabitsCompleted = false;
           break;
         }
       }
-      
+
       // Award 50 points for each day ALL habits were completed
       if (allHabitsCompleted) {
         totalScore += 50;
       }
     }
-    
+
     return totalScore;
+  }
+
+  int _calculateCompletionScore(HabitProvider habitProvider) {
+    final habits = habitProvider.habits;
+    if (habits.isEmpty) return 0;
+
+    int totalCompletions = 0;
+    for (final habit in habits) {
+      if (habit.dailyCompletions.isNotEmpty) {
+        totalCompletions +=
+            habit.dailyCompletions.values.fold(0, (sum, count) => sum + count);
+      } else {
+        totalCompletions += habit.completedDates.length;
+      }
+    }
+
+    return totalCompletions * 10;
   }
 }

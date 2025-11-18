@@ -1,4 +1,4 @@
-package com.example.streakly_app
+package com.example.Streakly
 
 import io.flutter.embedding.android.FlutterActivity
 

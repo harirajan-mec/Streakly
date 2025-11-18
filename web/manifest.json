@@ -1,6 +1,6 @@
 {
-    "name": "streakly_app",
-    "short_name": "streakly_app",
+    "name": "Streakly",
+    "short_name": "Streakly",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

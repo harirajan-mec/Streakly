@@ -107,6 +107,18 @@ class HabitDetailBottomSheet extends StatelessWidget {
                               latestHabit,
                             ),
                           ),
+                          const SizedBox(height: 12),
+                          ModernButton(
+                            text: 'Delete Habit',
+                            type: ModernButtonType.destructive,
+                            icon: Icons.delete_forever,
+                            fullWidth: true,
+                            onPressed: () => _confirmDeletion(
+                              context,
+                              latestHabit,
+                              isPremium,
+                            ),
+                          ),
                           const SizedBox(height: 16),
                           TextButton.icon(
                             onPressed: () {
@@ -362,6 +374,49 @@ class HabitDetailBottomSheet extends StatelessWidget {
       tags: const [],
     );
     await noteProvider.addNote(note);
+  }
+
+  void _confirmDeletion(
+    BuildContext context,
+    Habit habit,
+    bool isPremium,
+  ) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: const Text('Delete Habit'),
+          content: Text('Are you sure you want to delete "${habit.name}"?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+              ),
+              onPressed: () async {
+                final habitProvider =
+                    Provider.of<HabitProvider>(context, listen: false);
+                await habitProvider.deleteHabit(
+                  habit.id,
+                  isPremium: isPremium,
+                );
+                if (context.mounted) {
+                  Navigator.of(dialogContext).pop();
+                  Navigator.of(context).pop();
+                }
+              },
+              icon: const Icon(Icons.delete_forever),
+              label: const Text('Delete'),
+            ),
+          ],
+        );
+      },
+    );
   }
 }
 

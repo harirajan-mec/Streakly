@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lottie/lottie.dart';
 import 'package:provider/provider.dart';
 import '../../providers/habit_provider.dart';
 import '../../models/habit.dart';
@@ -17,7 +18,8 @@ class HabitsScreen extends StatefulWidget {
   State<HabitsScreen> createState() => _HabitsScreenState();
 }
 
-class _HabitsScreenState extends State<HabitsScreen> with WidgetsBindingObserver {
+class _HabitsScreenState extends State<HabitsScreen>
+    with WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();
@@ -58,16 +60,20 @@ class _HabitsScreenState extends State<HabitsScreen> with WidgetsBindingObserver
       appBar: AppBar(
         backgroundColor: theme.colorScheme.surface.withOpacity(0.95),
         elevation: 0,
-        titleSpacing: 16,
+        titleSpacing: 0,
         title: Row(
           children: [
-            // App icon - use plain icon with exact requested color and no background
-            const Icon(
-              Icons.local_fire_department,
-              color: Color(0xFF4B0082),
-              size: 28,
+            const SizedBox(width: 16),
+            SizedBox(
+              height: 40,
+              width: 40,
+              child: Lottie.asset(
+                'assets/animations/Flame animation(1).json',
+                repeat: true,
+                fit: BoxFit.contain,
+              ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 8),
             Text(
               'Streakly',
               style: theme.textTheme.headlineSmall?.copyWith(
@@ -124,7 +130,8 @@ class _HabitsScreenState extends State<HabitsScreen> with WidgetsBindingObserver
           decoration: BoxDecoration(
             color: Theme.of(context).cardColor,
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: Theme.of(context).colorScheme.outline.withOpacity(0.2)),
+            border: Border.all(
+                color: Theme.of(context).colorScheme.outline.withOpacity(0.2)),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -132,7 +139,8 @@ class _HabitsScreenState extends State<HabitsScreen> with WidgetsBindingObserver
               Container(
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.primary.withOpacity(0.15),
+                  color:
+                      Theme.of(context).colorScheme.primary.withOpacity(0.15),
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: Icon(
@@ -154,7 +162,10 @@ class _HabitsScreenState extends State<HabitsScreen> with WidgetsBindingObserver
                 'Add your first habit to get started!',
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurface.withOpacity( 0.6),
+                      color: Theme.of(context)
+                          .colorScheme
+                          .onSurface
+                          .withOpacity(0.6),
                     ),
               ),
               const SizedBox(height: 24),
@@ -178,8 +189,19 @@ class _HabitsScreenState extends State<HabitsScreen> with WidgetsBindingObserver
     final now = DateTime.now();
     final day = now.day;
     final monthNames = [
-      '', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+      '',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec'
     ];
     String getDaySuffix(int d) {
       if (d >= 11 && d <= 13) return 'th';
@@ -194,6 +216,7 @@ class _HabitsScreenState extends State<HabitsScreen> with WidgetsBindingObserver
           return 'th';
       }
     }
+
     final todayString = 'Today, '
         '$day${getDaySuffix(day)} ${monthNames[now.month]}';
 
@@ -208,25 +231,31 @@ class _HabitsScreenState extends State<HabitsScreen> with WidgetsBindingObserver
         itemBuilder: (context, index) {
           if (index == 0) {
             return Padding(
-              padding: const EdgeInsets.only(bottom: 14, left: 2, right: 2, top: 2),
+              padding:
+                  const EdgeInsets.only(bottom: 14, left: 2, right: 2, top: 2),
               child: Text.rich(
                 TextSpan(
                   children: [
                     TextSpan(
                       text: 'Today, ',
-                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.w700,
-                        color: Theme.of(context).colorScheme.onSurface,
-                        fontSize: 26,
-                      ),
+                      style:
+                          Theme.of(context).textTheme.headlineSmall?.copyWith(
+                                fontWeight: FontWeight.w700,
+                                color: Theme.of(context).colorScheme.onSurface,
+                                fontSize: 26,
+                              ),
                     ),
                     TextSpan(
                       text: todayString.substring(7),
-                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.w400,
-                        color: Theme.of(context).colorScheme.primary.withOpacity(0.8),
-                        fontSize: 26,
-                      ),
+                      style:
+                          Theme.of(context).textTheme.headlineSmall?.copyWith(
+                                fontWeight: FontWeight.w400,
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .primary
+                                    .withOpacity(0.8),
+                                fontSize: 26,
+                              ),
                     ),
                   ],
                 ),
@@ -245,7 +274,7 @@ class _HabitsScreenState extends State<HabitsScreen> with WidgetsBindingObserver
 
   void _showViewOptionsBottomSheet(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -271,7 +300,7 @@ class _HabitsScreenState extends State<HabitsScreen> with WidgetsBindingObserver
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
-              
+
               // Title
               Text(
                 'Choose View',
@@ -280,7 +309,7 @@ class _HabitsScreenState extends State<HabitsScreen> with WidgetsBindingObserver
                 ),
               ),
               const SizedBox(height: 20),
-              
+
               // List View Option
               ListTile(
                 leading: Container(
@@ -298,15 +327,19 @@ class _HabitsScreenState extends State<HabitsScreen> with WidgetsBindingObserver
                 title: const Text('List View'),
                 subtitle: const Text('View habits as cards'),
                 trailing: Icon(
-                  !NavigationService.isGridViewMode ? Icons.check_circle : Icons.chevron_right,
-                  color: !NavigationService.isGridViewMode ? theme.colorScheme.primary : null,
+                  !NavigationService.isGridViewMode
+                      ? Icons.check_circle
+                      : Icons.chevron_right,
+                  color: !NavigationService.isGridViewMode
+                      ? theme.colorScheme.primary
+                      : null,
                 ),
                 onTap: () {
                   Navigator.pop(context); // Close bottom sheet
                   // Already on list view, no navigation needed
                 },
               ),
-              
+
               // Grid View Option
               ListTile(
                 leading: Container(
@@ -324,20 +357,27 @@ class _HabitsScreenState extends State<HabitsScreen> with WidgetsBindingObserver
                 title: const Text('Grid View'),
                 subtitle: const Text('View habits with yearly progress'),
                 trailing: Icon(
-                  NavigationService.isGridViewMode ? Icons.check_circle : Icons.chevron_right,
-                  color: NavigationService.isGridViewMode ? theme.colorScheme.primary : null,
+                  NavigationService.isGridViewMode
+                      ? Icons.check_circle
+                      : Icons.chevron_right,
+                  color: NavigationService.isGridViewMode
+                      ? theme.colorScheme.primary
+                      : null,
                 ),
                 onTap: () async {
                   Navigator.pop(context); // Close bottom sheet
-                  await NavigationService.setGridViewMode(true); // Save preference
+                  await NavigationService.setGridViewMode(
+                      true); // Save preference
                   if (context.mounted) {
                     Navigator.of(context).pushReplacement(
-                      MaterialPageRoute(builder: (_) => const MainNavigationScreen(initialIndex: 0)),
+                      MaterialPageRoute(
+                          builder: (_) =>
+                              const MainNavigationScreen(initialIndex: 0)),
                     );
                   }
                 },
               ),
-              
+
               const SizedBox(height: 20),
             ],
           ),

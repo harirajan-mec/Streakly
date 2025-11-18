@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lottie/lottie.dart';
 import 'package:provider/provider.dart';
 import '../../providers/note_provider.dart';
 import '../../providers/habit_provider.dart';
@@ -26,7 +27,7 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
       _refreshNotes();
     });
   }
-  
+
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
@@ -70,7 +71,7 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
 
   Widget _buildEmptyState(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Center(
       child: Container(
         padding: const EdgeInsets.all(32),
@@ -128,7 +129,7 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
 
   Widget _buildRoadmapView(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     // Group notes by date for roadmap structure
     final groupedNotes = <String, List<Note>>{};
     for (final note in _filteredNotes) {
@@ -138,9 +139,10 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
       }
       groupedNotes[dateKey]!.add(note);
     }
-    
-    final sortedDates = groupedNotes.keys.toList()..sort((a, b) => b.compareTo(a));
-    
+
+    final sortedDates = groupedNotes.keys.toList()
+      ..sort((a, b) => b.compareTo(a));
+
     return SingleChildScrollView(
       child: Column(
         children: [
@@ -165,7 +167,7 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
     bool isLast,
   ) {
     final theme = Theme.of(context);
-    
+
     return Container(
       margin: EdgeInsets.only(bottom: isLast ? 0 : 24),
       child: Row(
@@ -222,7 +224,7 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
             ],
           ),
           const SizedBox(width: 16),
-          
+
           // Content
           Expanded(
             child: Column(
@@ -230,7 +232,8 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
               children: [
                 // Date header
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
                     color: theme.colorScheme.primary.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12),
@@ -247,13 +250,14 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
                   ),
                 ),
                 const SizedBox(height: 12),
-                
+
                 // Notes for this date
                 ...notes.asMap().entries.map((entry) {
                   final noteIndex = entry.key;
                   final note = entry.value;
                   return Container(
-                    margin: EdgeInsets.only(bottom: noteIndex == notes.length - 1 ? 0 : 16),
+                    margin: EdgeInsets.only(
+                        bottom: noteIndex == notes.length - 1 ? 0 : 16),
                     child: _buildRoadmapNoteCard(context, note),
                   );
                 }),
@@ -278,20 +282,20 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
       }
     }
     final Color accentColor = habit?.color ?? theme.colorScheme.primary;
-    
-  // Compute card background and border colors based on habit (if present)
-  // Use a slightly stronger tint so the habit color is more visible
-  // Stronger tint so habit color is clearly visible but still subtle
-  final Color cardBgColor = habit?.color.withOpacity(0.22) ?? theme.cardColor;
-  final Color cardBorderColor = habit != null
-    ? accentColor.withOpacity(0.32)
-    : theme.colorScheme.outline.withOpacity(0.2);
 
-  // Choose readable text color contrasted against the accent color when a habit is present
-  final bool useCustomTextColor = habit != null;
-  final Color contrastedTextColor = useCustomTextColor
-    ? (accentColor.computeLuminance() < 0.5 ? Colors.white : Colors.black87)
-    : theme.colorScheme.onSurface;
+    // Compute card background and border colors based on habit (if present)
+    // Use a slightly stronger tint so the habit color is more visible
+    // Stronger tint so habit color is clearly visible but still subtle
+    final Color cardBgColor = habit?.color.withOpacity(0.22) ?? theme.cardColor;
+    final Color cardBorderColor = habit != null
+        ? accentColor.withOpacity(0.32)
+        : theme.colorScheme.outline.withOpacity(0.2);
+
+    // Choose readable text color contrasted against the accent color when a habit is present
+    final bool useCustomTextColor = habit != null;
+    final Color contrastedTextColor = useCustomTextColor
+        ? (accentColor.computeLuminance() < 0.5 ? Colors.white : Colors.black87)
+        : theme.colorScheme.onSurface;
 
     return Container(
       decoration: BoxDecoration(
@@ -312,7 +316,7 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
           if (note.habitId != null && habit != null)
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                decoration: BoxDecoration(
+              decoration: BoxDecoration(
                 color: habit.color.withOpacity(0.15),
                 borderRadius: const BorderRadius.only(
                   topLeft: Radius.circular(8),
@@ -375,20 +379,24 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
                   Wrap(
                     spacing: 4,
                     runSpacing: 4,
-                    children: note.tags.map((tag) => Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.primary.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Text(
-                        tag,
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          color: theme.colorScheme.primary,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    )).toList(),
+                    children: note.tags
+                        .map((tag) => Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color:
+                                    theme.colorScheme.primary.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text(
+                                tag,
+                                style: theme.textTheme.labelSmall?.copyWith(
+                                  color: theme.colorScheme.primary,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ))
+                        .toList(),
                   ),
                 ],
               ],
@@ -410,14 +418,26 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
       final today = DateTime(now.year, now.month, now.day);
       final yesterday = today.subtract(const Duration(days: 1));
       final noteDate = DateTime(date.year, date.month, date.day);
-      
+
       if (noteDate == today) {
         return 'Today';
       } else if (noteDate == yesterday) {
         return 'Yesterday';
       } else {
-        final months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-                      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        final months = [
+          'Jan',
+          'Feb',
+          'Mar',
+          'Apr',
+          'May',
+          'Jun',
+          'Jul',
+          'Aug',
+          'Sep',
+          'Oct',
+          'Nov',
+          'Dec'
+        ];
         return '${months[date.month - 1]} ${date.day}, ${date.year}';
       }
     } catch (e) {
@@ -433,15 +453,20 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
       appBar: AppBar(
         backgroundColor: theme.colorScheme.surface.withOpacity(0.95),
         elevation: 0,
-        titleSpacing: 16,
+        titleSpacing: 0,
         title: Row(
           children: [
-            const Icon(
-              Icons.local_fire_department,
-              color: Color(0xFF4B0082),
-              size: 28,
+            const SizedBox(width: 16),
+            SizedBox(
+              height: 40,
+              width: 40,
+              child: Lottie.asset(
+                'assets/animations/Flame animation(1).json',
+                repeat: true,
+                fit: BoxFit.contain,
+              ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 8),
             Text(
               'Streakly',
               style: theme.textTheme.headlineSmall?.copyWith(
@@ -460,7 +485,8 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
                 _isSearching = !_isSearching;
                 if (!_isSearching) {
                   _searchController.clear();
-                  final noteProvider = Provider.of<NoteProvider>(context, listen: false);
+                  final noteProvider =
+                      Provider.of<NoteProvider>(context, listen: false);
                   _filteredNotes = noteProvider.notes;
                 }
               });
@@ -481,7 +507,8 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
                 decoration: BoxDecoration(
                   color: theme.cardColor,
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: theme.colorScheme.outline.withOpacity(0.2)),
+                  border: Border.all(
+                      color: theme.colorScheme.outline.withOpacity(0.2)),
                 ),
                 child: TextField(
                   controller: _searchController,
@@ -501,9 +528,10 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
                     return const Center(child: CircularProgressIndicator());
                   }
 
-                  final notesToShow = _isSearching && _searchController.text.isNotEmpty
-                      ? _filteredNotes
-                      : noteProvider.notes;
+                  final notesToShow =
+                      _isSearching && _searchController.text.isNotEmpty
+                          ? _filteredNotes
+                          : noteProvider.notes;
 
                   if (notesToShow.isEmpty) {
                     return _buildEmptyState(context);

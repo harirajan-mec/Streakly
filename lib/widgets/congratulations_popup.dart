@@ -3,15 +3,17 @@ import 'package:confetti/confetti.dart';
 import 'modern_button.dart';
 
 class CongratulationsPopup extends StatefulWidget {
-  final int totalStreaks;
-  final int completedHabits;
+  final String? habitName;
   final String? customMessage;
+  final IconData? habitIcon;
+  final Color? habitColor;
 
   const CongratulationsPopup({
     super.key,
-    required this.totalStreaks,
-    required this.completedHabits,
+    this.habitName,
     this.customMessage,
+    this.habitIcon,
+    this.habitColor,
   });
 
   @override
@@ -25,12 +27,14 @@ class _CongratulationsPopupState extends State<CongratulationsPopup>
   late AnimationController _slideController;
   late Animation<double> _scaleAnimation;
   late Animation<Offset> _slideAnimation;
+  late Animation<double> _textFadeAnimation;
 
   @override
   void initState() {
     super.initState();
-    
-    _confettiController = ConfettiController(duration: const Duration(seconds: 3));
+
+    _confettiController =
+        ConfettiController(duration: const Duration(seconds: 3));
     _scaleController = AnimationController(
       duration: const Duration(milliseconds: 600),
       vsync: this,
@@ -53,6 +57,11 @@ class _CongratulationsPopupState extends State<CongratulationsPopup>
       curve: Curves.easeOutBack,
     ));
 
+    _textFadeAnimation = CurvedAnimation(
+      parent: _slideController,
+      curve: const Interval(0.3, 1, curve: Curves.easeIn),
+    );
+
     // Start animations
     _confettiController.play();
     _scaleController.forward();
@@ -70,12 +79,12 @@ class _CongratulationsPopupState extends State<CongratulationsPopup>
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Stack(
       children: [
         // Background overlay
         Container(
-          color: Colors.black.withOpacity( 0.7),
+          color: Colors.black.withOpacity(0.7),
           child: Center(
             child: SlideTransition(
               position: _slideAnimation,
@@ -88,11 +97,11 @@ class _CongratulationsPopupState extends State<CongratulationsPopup>
                     color: theme.cardColor,
                     borderRadius: BorderRadius.circular(28),
                     border: Border.all(
-                      color: theme.colorScheme.outline.withOpacity( 0.2),
+                      color: theme.colorScheme.outline.withOpacity(0.2),
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity( 0.1),
+                        color: Colors.black.withOpacity(0.1),
                         blurRadius: 20,
                         offset: const Offset(0, 10),
                       ),
@@ -101,93 +110,55 @@ class _CongratulationsPopupState extends State<CongratulationsPopup>
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      // Trophy icon with gradient
-                      Container(
-                        width: 80,
-                        height: 80,
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              Colors.amber,
-                              Colors.orange,
-                            ],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
-                          borderRadius: BorderRadius.circular(40),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.amber.withOpacity( 0.3),
-                              blurRadius: 15,
-                              offset: const Offset(0, 5),
-                            ),
-                          ],
-                        ),
-                        child: const Icon(
-                          Icons.emoji_events,
-                          color: Colors.white,
-                          size: 40,
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                      
-                      // Congratulations text
-                      Text(
-                        widget.customMessage ?? 'Congratulations! 🎉',
-                        style: theme.textTheme.headlineSmall?.copyWith(
-                          fontWeight: FontWeight.w800,
-                          color: theme.colorScheme.onSurface,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 12),
-                      
-                      Text(
-                        'You completed all your habits for today!',
-                        style: theme.textTheme.bodyLarge?.copyWith(
-                          color: theme.colorScheme.onSurface.withOpacity(0.7),
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 24),
-                      
-                      // Stats container
-                      Container(
-                        padding: const EdgeInsets.all(20),
-                        decoration: BoxDecoration(
-                          color: theme.colorScheme.primary.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: theme.colorScheme.primary.withOpacity(0.2),
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      // Habit icon spotlight with colorful paper show
+                      SizedBox(
+                        width: 140,
+                        height: 140,
+                        child: Stack(
+                          alignment: Alignment.center,
+                          clipBehavior: Clip.none,
                           children: [
-                            _buildStatItem(
-                              context,
-                              icon: Icons.local_fire_department,
-                              label: 'Total Streaks',
-                              value: widget.totalStreaks.toString(),
-                              color: Colors.orange,
-                            ),
-                            Container(
-                              width: 1,
-                              height: 40,
-                              color: theme.colorScheme.outline.withOpacity(0.3),
-                            ),
-                            _buildStatItem(
-                              context,
-                              icon: Icons.check_circle,
-                              label: 'Completed',
-                              value: widget.completedHabits.toString(),
-                              color: Colors.green,
+                            const _ColorfulPaperShow(),
+                            _HabitIconBadge(
+                              icon: widget.habitIcon,
+                              fallbackIcon: Icons.emoji_events,
+                              color: widget.habitColor,
                             ),
                           ],
                         ),
                       ),
                       const SizedBox(height: 24),
-                      
+
+                      FadeTransition(
+                        opacity: _textFadeAnimation,
+                        child: Column(
+                          children: [
+                            if (widget.habitName != null) ...[
+                              Text(
+                                '"${widget.habitName!}"',
+                                style: theme.textTheme.headlineMedium?.copyWith(
+                                  fontWeight: FontWeight.w800,
+                                  color: theme.colorScheme.onSurface,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                              const SizedBox(height: 12),
+                            ],
+                            Text(
+                              widget.customMessage ??
+                                  'You completed all your habits for today! 🎉',
+                              style: theme.textTheme.bodyLarge?.copyWith(
+                                color: theme.colorScheme.onSurface
+                                    .withOpacity(0.85),
+                                fontWeight: FontWeight.w600,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 32),
+
                       // Close button
                       ModernButton(
                         text: 'Awesome! 🎉',
@@ -203,7 +174,7 @@ class _CongratulationsPopupState extends State<CongratulationsPopup>
             ),
           ),
         ),
-        
+
         // Confetti
         Align(
           alignment: Alignment.topCenter,
@@ -227,46 +198,147 @@ class _CongratulationsPopupState extends State<CongratulationsPopup>
       ],
     );
   }
+}
 
-  Widget _buildStatItem(
-    BuildContext context, {
-    required IconData icon,
-    required String label,
-    required String value,
-    required Color color,
-  }) {
-    final theme = Theme.of(context);
-    
-    return Column(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(8),
+class _HabitIconBadge extends StatelessWidget {
+  final IconData? icon;
+  final IconData fallbackIcon;
+  final Color? color;
+
+  const _HabitIconBadge({
+    required this.icon,
+    required this.fallbackIcon,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final baseColor = color ?? Colors.orange;
+
+    return Container(
+      width: 90,
+      height: 90,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            baseColor.withOpacity(0.65),
+            baseColor,
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        shape: BoxShape.circle,
+        boxShadow: [
+          BoxShadow(
+            color: baseColor.withOpacity(0.35),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Icon(
+        icon ?? fallbackIcon,
+        color: Colors.white,
+        size: 40,
+      ),
+    );
+  }
+}
+
+class _ColorfulPaperShow extends StatelessWidget {
+  const _ColorfulPaperShow();
+
+  @override
+  Widget build(BuildContext context) {
+    return IgnorePointer(
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final center = Offset(
+            constraints.maxWidth / 2,
+            constraints.maxHeight / 2,
+          );
+
+          return Stack(
+            clipBehavior: Clip.none,
+            children: [
+              _PaperPiece(
+                angle: -0.2,
+                offset: const Offset(-50, -10),
+                colors: const [Color(0xFFFF6CAB), Color(0xFFFFD86F)],
+                size: const Size(28, 12),
+                center: center,
+              ),
+              _PaperPiece(
+                angle: 0.35,
+                offset: const Offset(40, -25),
+                colors: const [Color(0xFF6FC8FF), Color(0xFF4A7BFF)],
+                size: const Size(26, 14),
+                center: center,
+              ),
+              _PaperPiece(
+                angle: -0.6,
+                offset: const Offset(-35, 45),
+                colors: const [Color(0xFF7BFFB8), Color(0xFF00D2FF)],
+                size: const Size(20, 10),
+                center: center,
+              ),
+              _PaperPiece(
+                angle: 0.9,
+                offset: const Offset(35, 55),
+                colors: const [Color(0xFFFFA36F), Color(0xFFFF5F6D)],
+                size: const Size(18, 9),
+                center: center,
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _PaperPiece extends StatelessWidget {
+  final double angle;
+  final Offset offset;
+  final List<Color> colors;
+  final Size size;
+  final Offset center;
+
+  const _PaperPiece({
+    required this.angle,
+    required this.offset,
+    required this.colors,
+    required this.size,
+    required this.center,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Positioned(
+      left: center.dx + offset.dx,
+      top: center.dy + offset.dy,
+      child: Transform.rotate(
+        angle: angle,
+        child: Container(
+          width: size.width,
+          height: size.height,
           decoration: BoxDecoration(
-            color: color.withOpacity(0.15),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Icon(
-            icon,
-            color: color,
-            size: 20,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          value,
-          style: theme.textTheme.titleLarge?.copyWith(
-            fontWeight: FontWeight.w700,
-            color: theme.colorScheme.onSurface,
+            borderRadius: BorderRadius.circular(4),
+            gradient: LinearGradient(
+              colors: colors,
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: colors.last.withOpacity(0.35),
+                blurRadius: 6,
+                offset: const Offset(0, 3),
+              ),
+            ],
           ),
         ),
-        const SizedBox(height: 2),
-        Text(
-          label,
-          style: theme.textTheme.bodySmall?.copyWith(
-            color: theme.colorScheme.onSurface.withOpacity(0.6),
-          ),
-        ),
-      ],
+      ),
     );
   }
 }

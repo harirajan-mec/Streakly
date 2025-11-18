@@ -173,5 +173,5 @@ class AvatarPicker extends StatelessWidget {
 }
 '''
 
-with open('d:/streakly_app/lib/widgets/avatar_picker.dart', 'w', encoding='utf-8') as f:
+with open('d:/Streakly/lib/widgets/avatar_picker.dart', 'w', encoding='utf-8') as f:
     f.write(file_content)

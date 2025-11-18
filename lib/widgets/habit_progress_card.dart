@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/habit.dart';
 import 'habit_detail_bottom_sheet.dart';
+import 'habit_note_icon_button.dart';
 import 'multi_completion_button.dart';
 
 class HabitProgressCard extends StatelessWidget {
@@ -130,7 +131,14 @@ class HabitProgressCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 12),
-                MultiCompletionButton(habit: habit),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    HabitNoteIconButton(habit: habit),
+                    const SizedBox(width: 6),
+                    MultiCompletionButton(habit: habit),
+                  ],
+                ),
               ],
             ),
           ),

@@ -1,4 +1,4 @@
-# streakly_app
+# Streakly
 
 A new Flutter project.
 

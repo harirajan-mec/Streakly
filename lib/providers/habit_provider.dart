@@ -21,11 +21,14 @@ class HabitProvider with ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
 
-  List<Habit> get activeHabits => _habits.where((habit) => habit.isActive).toList();
+  List<Habit> get activeHabits =>
+      _habits.where((habit) => habit.isActive).toList();
 
-  List<Habit> get temporaryHabits => _habits.where((habit) => habit.isTemporary == true).toList();
+  List<Habit> get temporaryHabits =>
+      _habits.where((habit) => habit.isTemporary == true).toList();
 
-  List<Habit> get permanentHabits => _habits.where((habit) => habit.isTemporary != true).toList();
+  List<Habit> get permanentHabits =>
+      _habits.where((habit) => habit.isTemporary != true).toList();
 
   List<Habit> getHabitsByTimeOfDay(HabitTimeOfDay timeOfDay) {
     return activeHabits.where((habit) => habit.timeOfDay == timeOfDay).toList();
@@ -44,7 +47,8 @@ class HabitProvider with ChangeNotifier {
     return completedTodayCount / activeHabits.length;
   }
 
-  HabitProvider(this._admobService) { // Update constructor
+  HabitProvider(this._admobService) {
+    // Update constructor
     loadHabits();
   }
 
@@ -74,11 +78,19 @@ class HabitProvider with ChangeNotifier {
     }
   }
 
-  Future<void> addHabit(Habit habit, {bool isPremium = false}) async { // Add isPremium parameter
+  Future<void> addHabit(Habit habit, {bool isPremium = false}) async {
+    // Add isPremium parameter
     try {
       _isLoading = true;
       _errorMessage = null;
       notifyListeners();
+
+      if (isHabitNameTaken(habit.name, excludeId: habit.id)) {
+        _errorMessage = 'Habit name already exists';
+        _isLoading = false;
+        notifyListeners();
+        return;
+      }
 
       print('Adding habit: ${habit.name}'); // Debug print
       final createdHabit = await SupabaseService.instance.createHabit(habit);
@@ -87,8 +99,13 @@ class HabitProvider with ChangeNotifier {
 
       if (createdHabit.reminderTime != null) {
         final now = tz.TZDateTime.now(tz.local);
-        var scheduledDate = tz.TZDateTime(tz.local, now.year, now.month, now.day,
-            createdHabit.reminderTime!.hour, createdHabit.reminderTime!.minute);
+        var scheduledDate = tz.TZDateTime(
+            tz.local,
+            now.year,
+            now.month,
+            now.day,
+            createdHabit.reminderTime!.hour,
+            createdHabit.reminderTime!.minute);
         if (scheduledDate.isBefore(now)) {
           scheduledDate = scheduledDate.add(const Duration(days: 1));
         }
@@ -124,6 +141,13 @@ class HabitProvider with ChangeNotifier {
       _errorMessage = null;
       notifyListeners();
 
+      if (isHabitNameTaken(updatedHabit.name, excludeId: id)) {
+        _errorMessage = 'Habit name already exists';
+        _isLoading = false;
+        notifyListeners();
+        return;
+      }
+
       final index = _habits.indexWhere((habit) => habit.id == id);
       if (index != -1) {
         if (SupabaseService.instance.currentUserId != null) {
@@ -135,8 +159,13 @@ class HabitProvider with ChangeNotifier {
 
         if (updatedHabit.reminderTime != null) {
           final now = tz.TZDateTime.now(tz.local);
-          var scheduledDate = tz.TZDateTime(tz.local, now.year, now.month, now.day,
-              updatedHabit.reminderTime!.hour, updatedHabit.reminderTime!.minute);
+          var scheduledDate = tz.TZDateTime(
+              tz.local,
+              now.year,
+              now.month,
+              now.day,
+              updatedHabit.reminderTime!.hour,
+              updatedHabit.reminderTime!.minute);
           if (scheduledDate.isBefore(now)) {
             scheduledDate = scheduledDate.add(const Duration(days: 1));
           }
@@ -166,11 +195,13 @@ class HabitProvider with ChangeNotifier {
     if (index != -1) {
       _habits[index] = updatedHabit;
       notifyListeners();
-      print('Temporary habit updated successfully: ${updatedHabit.id}'); // Debug print
+      print(
+          'Temporary habit updated successfully: ${updatedHabit.id}'); // Debug print
     }
   }
 
-  Future<void> deleteHabit(String id, {bool isPremium = false}) async { // Add isPremium parameter
+  Future<void> deleteHabit(String id, {bool isPremium = false}) async {
+    // Add isPremium parameter
     try {
       _isLoading = true;
       _errorMessage = null;
@@ -192,7 +223,9 @@ class HabitProvider with ChangeNotifier {
     }
   }
 
-  Future<void> toggleHabitCompletion(String id, [BuildContext? context, bool isPremium = false]) async { // Add isPremium parameter
+  Future<void> toggleHabitCompletion(String id,
+      [BuildContext? context, bool isPremium = false]) async {
+    // Add isPremium parameter
     final index = _habits.indexWhere((habit) => habit.id == id);
     if (index != -1) {
       final habit = _habits[index];
@@ -205,8 +238,10 @@ class HabitProvider with ChangeNotifier {
       final wasAllCompleted = _areAllHabitsCompleted();
 
       if (currentCount >= habit.remindersPerDay) {
-        print('⚠️  Habit "${habit.name}" is fully completed for today. Try again tomorrow!');
-        _errorMessage = 'Habit already completed for today. Come back tomorrow!';
+        print(
+            '⚠️  Habit "${habit.name}" is fully completed for today. Try again tomorrow!');
+        _errorMessage =
+            'Habit already completed for today. Come back tomorrow!';
         notifyListeners();
         return; // Exit without making changes
       }
@@ -218,7 +253,8 @@ class HabitProvider with ChangeNotifier {
         completedDates.add(today);
       }
 
-      print('✅ Habit "${habit.name}" marked complete ($newCount/${habit.remindersPerDay})');
+      print(
+          '✅ Habit "${habit.name}" marked complete ($newCount/${habit.remindersPerDay})');
 
       if (SupabaseService.instance.currentUserId != null) {
         try {
@@ -260,9 +296,10 @@ class HabitProvider with ChangeNotifier {
       context: context,
       barrierDismissible: true, // Allow dismissing by tapping outside
       builder: (context) => CongratulationsPopup(
-        totalStreaks: habit.currentStreak,
-        completedHabits: habit.getTodayCompletionCount(),
-        customMessage: 'You completed "${habit.name}" ${habit.remindersPerDay}x today! 🎉',
+        habitName: habit.name,
+        customMessage: 'You completed it ${habit.remindersPerDay}x today! 🎉',
+        habitIcon: habit.icon,
+        habitColor: habit.color,
       ),
     );
   }
@@ -272,8 +309,10 @@ class HabitProvider with ChangeNotifier {
       context: context,
       barrierDismissible: false,
       builder: (context) => CongratulationsPopup(
-        totalStreaks: totalStreaks,
-        completedHabits: completedTodayCount,
+        habitName: 'All habits completed',
+        customMessage: 'You completed all your habits for today! 🎉',
+        habitIcon: Icons.workspace_premium,
+        habitColor: Colors.deepPurpleAccent,
       ),
     );
   }
@@ -316,5 +355,15 @@ class HabitProvider with ChangeNotifier {
   void clearError() {
     _errorMessage = null;
     notifyListeners();
+  }
+
+  bool isHabitNameTaken(String name, {String? excludeId}) {
+    final normalized = name.trim().toLowerCase();
+    return _habits.any((habit) {
+      if (excludeId != null && habit.id == excludeId) {
+        return false;
+      }
+      return habit.name.trim().toLowerCase() == normalized;
+    });
   }
 }

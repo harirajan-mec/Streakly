@@ -34,7 +34,6 @@ class HeroStatsCard extends StatelessWidget {
     final size = MediaQuery.of(context).size;
     final isSmallScreen = size.width < 360;
     final isMediumScreen = size.width < 600;
-
     return Container(
       width: double.infinity,
       padding: EdgeInsets.all(isSmallScreen ? 16 : 20),
@@ -103,11 +102,13 @@ class HeroStatsCard extends StatelessWidget {
                         ),
                         SizedBox(width: isSmallScreen ? 4 : 6),
                         Padding(
-                          padding: EdgeInsets.only(bottom: isSmallScreen ? 4 : 6),
+                          padding:
+                              EdgeInsets.only(bottom: isSmallScreen ? 4 : 6),
                           child: Text(
                             'days',
                             style: theme.textTheme.titleMedium?.copyWith(
-                              color: theme.colorScheme.onSurface.withOpacity(0.6),
+                              color:
+                                  theme.colorScheme.onSurface.withOpacity(0.6),
                               fontWeight: FontWeight.w600,
                               fontSize: isSmallScreen ? 14 : null,
                             ),

@@ -171,6 +171,42 @@ CREATE TRIGGER on_auth_user_created
     FOR EACH ROW
     EXECUTE FUNCTION public.handle_new_user();
 
+-- Public leaderboard helper (security definer to bypass RLS safely)
+CREATE OR REPLACE FUNCTION public.get_public_leaderboard(limit_count INTEGER DEFAULT 30)
+RETURNS TABLE (
+    user_id UUID,
+    name TEXT,
+    email TEXT,
+    avatar_url TEXT,
+    total_habits INTEGER,
+    total_completions INTEGER,
+    current_streak INTEGER,
+    longest_streak INTEGER
+)
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+    SELECT
+        us.user_id,
+        u.name,
+        u.email,
+        u.avatar_url,
+        us.total_habits,
+        us.total_completions,
+        us.current_streak,
+        us.longest_streak
+    FROM public.user_stats us
+    JOIN public.users u ON u.id = us.user_id
+    ORDER BY us.current_streak DESC,
+             us.total_completions DESC,
+             us.longest_streak DESC,
+             u.created_at ASC
+    LIMIT limit_count;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.get_public_leaderboard(INTEGER) TO anon, authenticated;
+
 -- Create function to update user stats
 CREATE OR REPLACE FUNCTION public.update_user_stats(user_uuid UUID)
 RETURNS VOID AS $$

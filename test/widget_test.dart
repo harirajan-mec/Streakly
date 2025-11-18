@@ -7,7 +7,7 @@
 
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:streakly_app/main.dart';
+import 'package:Streakly/main.dart';
 
 void main() {
   testWidgets('App launches smoke test', (WidgetTester tester) async {
