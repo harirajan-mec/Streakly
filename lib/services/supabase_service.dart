@@ -4,6 +4,7 @@ import '../config/supabase_config.dart';
 import '../models/habit.dart';
 import '../models/user.dart';
 import '../models/leaderboard_entry.dart';
+import '../models/product.dart';
 
 class SupabaseService {
   static SupabaseService? _instance;
@@ -143,6 +144,31 @@ class SupabaseService {
         .order('created_at');
 
     return response.map<Habit>((json) => _habitFromSupabaseJson(json)).toList();
+  }
+
+  // Product Methods
+  Future<List<Product>> getProducts({String status = 'all'}) async {
+    try {
+      final selectCols =
+          'id, name, slug, description, category_id, price_cents, currency, stock_qty, status, created_at, image_url';
+
+        final response = status == 'all'
+          ? await client.from('products').select(selectCols).order('created_at', ascending: false)
+          : await client
+            .from('products')
+            .select(selectCols)
+            .eq('status', status)
+            .order('created_at', ascending: false);
+
+      if (response == null) return [];
+
+      return List<Map<String, dynamic>>.from(response)
+          .map((json) => Product.fromJson(Map<String, dynamic>.from(json)))
+          .toList();
+    } catch (e) {
+      print('Error fetching products: $e');
+      return [];
+    }
   }
 
   Future<Habit> createHabit(Habit habit) async {

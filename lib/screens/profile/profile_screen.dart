@@ -13,6 +13,7 @@ import '../subscription/subscription_plans_screen.dart';
 import 'leaderboard_screen.dart';
 import '../../widgets/hero_stats_card.dart';
 import '../reminders/test_notification_screen.dart';
+import '../shop/shop_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -375,6 +376,20 @@ class ProfileScreen extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 16),
+        _buildMenuCard(
+          context,
+          [
+            _buildMenuItem(
+              context,
+              title: 'Streakly Shop',
+              subtitle: 'Unlock themes, boosters, and extras',
+              icon: Icons.shopping_bag,
+              iconColor: Colors.pinkAccent,
+              onTap: () => _showShopDialog(context),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
         // Modified "Share App" Menu Item
         _buildMenuCard(
           context,
@@ -546,6 +561,84 @@ class ProfileScreen extends StatelessWidget {
                     color: theme.colorScheme.onSurface.withOpacity(0.4)),
           ],
         ),
+      ),
+    );
+  }
+
+  void _showShopDialog(BuildContext context) {
+    final theme = Theme.of(context);
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.pinkAccent.withOpacity(0.15),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(Icons.shopping_bag, color: Colors.pinkAccent),
+            ),
+            const SizedBox(width: 12),
+            const Text('Streakly Shop'),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Upgrade your experience with premium themes, streak boosts, and fun avatar items.',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurface.withOpacity(0.75),
+                height: 1.4,
+              ),
+            ),
+            const SizedBox(height: 20),
+            Column(
+              children: const [
+                _ShopHighlight(
+                  icon: Icons.palette_outlined,
+                  color: Colors.deepPurple,
+                  title: 'Exclusive Themes',
+                  subtitle: 'Personalize your streak dashboard',
+                ),
+                SizedBox(height: 12),
+                _ShopHighlight(
+                  icon: Icons.bolt,
+                  color: Colors.orange,
+                  title: 'Boosters & Power-ups',
+                  subtitle: 'Keep your streak alive even on busy days',
+                ),
+                SizedBox(height: 12),
+                _ShopHighlight(
+                  icon: Icons.emoji_emotions,
+                  color: Colors.green,
+                  title: 'Avatar Goodies',
+                  subtitle: 'Unlock badges, frames, and more fun flair',
+                ),
+              ],
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Maybe Later'),
+          ),
+          FilledButton.icon(
+            icon: const Icon(Icons.shopping_cart),
+            label: const Text('Go to Shop'),
+            onPressed: () {
+              Navigator.of(context).pop();
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const ShopScreen()),
+              );
+            },
+          ),
+        ],
       ),
     );
   }
@@ -1360,5 +1453,58 @@ class ProfileScreen extends StatelessWidget {
     }
 
     return totalCompletions * 10;
+  }
+}
+
+class _ShopHighlight extends StatelessWidget {
+  final IconData icon;
+  final Color color;
+  final String title;
+  final String subtitle;
+
+  const _ShopHighlight({
+    required this.icon,
+    required this.color,
+    required this.title,
+    required this.subtitle,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.15),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Icon(icon, color: color, size: 20),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: theme.textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                subtitle,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurface.withOpacity(0.65),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
   }
 }

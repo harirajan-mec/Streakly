@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:lottie/lottie.dart';
+import '../../services/supabase_service.dart';
+import '../../models/product.dart';
 
 class ShopScreen extends StatefulWidget {
   const ShopScreen({super.key});
@@ -8,46 +11,55 @@ class ShopScreen extends StatefulWidget {
 }
 
 class _ShopScreenState extends State<ShopScreen> {
-  final List<Product> _products = [
-    Product(
-      id: '1',
-      name: 'Premium Water Bottle',
-      description: 'Stay hydrated with this premium insulated water bottle',
-      price: 29.99,
-      imageUrl: 'https://via.placeholder.com/200',
-      category: 'Health',
-    ),
-    Product(
-      id: '2',
-      name: 'Yoga Mat',
-      description: 'Non-slip yoga mat perfect for your daily exercise routine',
-      price: 39.99,
-      imageUrl: 'https://via.placeholder.com/200',
-      category: 'Fitness',
-    ),
-    Product(
-      id: '3',
-      name: 'Reading Light',
-      description: 'LED reading light for your evening reading habit',
-      price: 19.99,
-      imageUrl: 'https://via.placeholder.com/200',
-      category: 'Reading',
-    ),
-    Product(
-      id: '4',
-      name: 'Meditation Cushion',
-      description: 'Comfortable cushion for your meditation practice',
-      price: 49.99,
-      imageUrl: 'https://via.placeholder.com/200',
-      category: 'Wellness',
-    ),
-  ];
+  final List<Product> _products = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProducts();
+  }
+
+  Future<void> _loadProducts() async {
+    try {
+      final prods = await SupabaseService.instance.getProducts();
+      setState(() => _products.clear());
+      setState(() => _products.addAll(prods));
+    } catch (e) {
+      // ignore errors for now
+      print('Failed to load products: $e');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Shop'),
+        backgroundColor: theme.colorScheme.surface.withOpacity(0.95),
+        elevation: 0,
+        titleSpacing: 0,
+        title: Row(
+          children: [
+            const SizedBox(width: 16),
+            SizedBox(
+              height: 36,
+              width: 36,
+              child: Lottie.asset(
+                'assets/animations/Flame animation(1).json',
+                repeat: true,
+                fit: BoxFit.contain,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              'Streakly Shop',
+              style: theme.textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ],
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.search),
@@ -63,209 +75,116 @@ class _ShopScreenState extends State<ShopScreen> {
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildHeader(),
-            _buildFeaturedSection(),
-            _buildProductGrid(),
-          ],
+      body: ListView.separated(
+        padding: const EdgeInsets.fromLTRB(20, 20, 20, 40),
+        physics: const BouncingScrollPhysics(),
+        itemBuilder: (context, index) => _buildProductCard(
+          _products[index],
+          theme,
         ),
+        separatorBuilder: (_, __) => const SizedBox(height: 16),
+        itemCount: _products.length,
       ),
     );
   }
 
-  Widget _buildHeader() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Theme.of(context).colorScheme.primary,
-            Theme.of(context).colorScheme.primary.withOpacity(0.8),
-          ],
+  Widget _buildProductCard(Product product, ThemeData theme) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(24),
+      onTap: () => _showProductDetail(product),
+      child: Container(
+        decoration: BoxDecoration(
+          color: theme.cardColor,
+          borderRadius: BorderRadius.circular(24),
+          border:
+              Border.all(color: theme.colorScheme.outline.withOpacity(0.12)),
         ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Habit-Building Products',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Discover products that support your habit journey',
-            style: TextStyle(
-              fontSize: 16,
-              color: Colors.white.withOpacity(0.9),
-            ),
-          ),
-          const SizedBox(height: 12),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.white.withOpacity(0.3)),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.admin_panel_settings,
-                  size: 16,
-                  color: Colors.white.withOpacity(0.9),
-                ),
-                const SizedBox(width: 6),
-                Text(
-                  'Admin Managed',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.white.withOpacity(0.9),
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFeaturedSection() {
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Featured Products',
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 16),
-          SizedBox(
-            height: 200,
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              itemCount: 2,
-              itemBuilder: (context, index) {
-                final product = _products[index];
-                return Container(
-                  width: 160,
-                  margin: const EdgeInsets.only(right: 12),
-                  child: _buildProductCard(product, featured: true),
-                );
-              },
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildProductGrid() {
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'All Products',
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 16),
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              childAspectRatio: 0.8,
-              crossAxisSpacing: 12,
-              mainAxisSpacing: 12,
-            ),
-            itemCount: _products.length,
-            itemBuilder: (context, index) {
-              return _buildProductCard(_products[index]);
-            },
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildProductCard(Product product, {bool featured = false}) {
-    return Card(
-      elevation: featured ? 4 : 2,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(12),
-        onTap: () {
-          _showProductDetail(product);
-        },
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        padding: const EdgeInsets.all(16),
+        child: Row(
           children: [
-            Expanded(
-              flex: 3,
-              child: Container(
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-                ),
-                child: const Icon(
-                  Icons.shopping_bag,
-                  size: 48,
-                  color: Colors.grey,
+            SizedBox(
+              width: 110,
+              height: 110,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(18),
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            theme.colorScheme.primary.withOpacity(0.2),
+                            theme.colorScheme.primary.withOpacity(0.05),
+                          ],
+                        ),
+                      ),
+                    ),
+                    if (product.imageUrl != null && product.imageUrl!.isNotEmpty)
+                      Image.network(
+                        product.imageUrl!,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) => Icon(
+                          Icons.shopping_bag,
+                          color: theme.colorScheme.primary,
+                          size: 36,
+                        ),
+                      )
+                    else
+                      const Center(
+                        child: Icon(
+                          Icons.shopping_bag,
+                          size: 36,
+                        ),
+                      ),
+                  ],
                 ),
               ),
             ),
-            Container(
-              height: 100, // Fixed height to prevent overflow
-              padding: const EdgeInsets.all(12),
+            const SizedBox(width: 16),
+            Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
                     product.name,
-                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.w600,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
                     ),
-                    maxLines: 1,
+                    maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 4),
-                  Expanded(
-                    child: Text(
-                      product.description,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 6),
                   Text(
                     '\$${product.price.toStringAsFixed(2)}',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    style: theme.textTheme.headlineSmall?.copyWith(
                       fontWeight: FontWeight.bold,
-                      color: Theme.of(context).colorScheme.primary,
+                      color: theme.colorScheme.primary,
                     ),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: FilledButton(
+                          onPressed: () => _buyProduct(product),
+                          style: FilledButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            textStyle: theme.textTheme.labelLarge?.copyWith(
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          child: const Text('Buy'),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      IconButton.filledTonal(
+                        onPressed: () => _addToCart(product),
+                        icon: const Icon(Icons.shopping_cart_outlined),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -273,6 +192,18 @@ class _ShopScreenState extends State<ShopScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  void _buyProduct(Product product) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Purchased ${product.name}!')),
+    );
+  }
+
+  void _addToCart(Product product) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('${product.name} added to cart!')),
     );
   }
 
@@ -317,23 +248,23 @@ class _ShopScreenState extends State<ShopScreen> {
               Text(
                 product.name,
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+                      fontWeight: FontWeight.bold,
+                    ),
               ),
               const SizedBox(height: 8),
               Text(
                 '\$${product.price.toStringAsFixed(2)}',
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: Theme.of(context).colorScheme.primary,
-                ),
+                      fontWeight: FontWeight.bold,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
               ),
               const SizedBox(height: 16),
               Text(
                 'Description',
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
+                      fontWeight: FontWeight.w600,
+                    ),
               ),
               const SizedBox(height: 8),
               Text(
@@ -364,20 +295,4 @@ class _ShopScreenState extends State<ShopScreen> {
   }
 }
 
-class Product {
-  final String id;
-  final String name;
-  final String description;
-  final double price;
-  final String imageUrl;
-  final String category;
 
-  Product({
-    required this.id,
-    required this.name,
-    required this.description,
-    required this.price,
-    required this.imageUrl,
-    required this.category,
-  });
-}
