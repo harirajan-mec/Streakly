@@ -64,11 +64,83 @@ class HeroStatsCard extends StatelessWidget {
                   width: isSmallScreen ? 50 : 60,
                   height: isSmallScreen ? 50 : 60,
                   child: currentStreak > 0
-                      ? Lottie.asset(
-                          'assets/animations/Flame animation(1).json',
-                          fit: BoxFit.contain,
-                          repeat: true,
-                        )
+                      ? Builder(builder: (context) {
+                          // Compute best all-habits streak from provider
+                          final activeHabits = habitProvider.activeHabits;
+                          int bestStreak = 0;
+                          if (activeHabits.isNotEmpty) {
+                            final today = DateTime.now();
+                            DateTime earliestDate = today;
+                            for (var habit in activeHabits) {
+                              if (habit.createdAt.isBefore(earliestDate)) {
+                                earliestDate = habit.createdAt;
+                              }
+                            }
+
+                            int current = 0;
+                            for (int daysFromStart = 0;
+                                daysFromStart <=
+                                    today.difference(earliestDate).inDays;
+                                daysFromStart++) {
+                              final checkDate = earliestDate
+                                  .add(Duration(days: daysFromStart));
+                              bool allHabitsCompleted = true;
+
+                              // Get habits that existed on this date
+                              List habitsOnDate = activeHabits
+                                  .where((habit) =>
+                                      !habit.createdAt.isAfter(checkDate))
+                                  .toList();
+
+                              if (habitsOnDate.isEmpty) {
+                                current = 0;
+                                continue;
+                              }
+
+                              for (var habit in habitsOnDate) {
+                                bool habitCompleted = habit.completedDates.any(
+                                    (date) =>
+                                        date.year == checkDate.year &&
+                                        date.month == checkDate.month &&
+                                        date.day == checkDate.day);
+                                if (!habitCompleted) {
+                                  allHabitsCompleted = false;
+                                  break;
+                                }
+                              }
+
+                              if (allHabitsCompleted) {
+                                current++;
+                                if (current > bestStreak) bestStreak = current;
+                              } else {
+                                current = 0;
+                              }
+                            }
+                          }
+
+                          // Show gold flame only when user reaches a 10-day streak
+                          final bool isGold = currentStreak >= 10;
+
+                          final lottie = Lottie.asset(
+                            'assets/animations/Flame animation(1).json',
+                            fit: BoxFit.contain,
+                            repeat: true,
+                          );
+
+                          if (isGold) {
+                            // Tint the animation to gold using ShaderMask
+                            return ShaderMask(
+                              blendMode: BlendMode.srcATop,
+                              shaderCallback: (rect) =>
+                                  const LinearGradient(
+                                colors: [Color(0xFFFFD700), Color(0xFFFFD700)],
+                              ).createShader(rect),
+                              child: lottie,
+                            );
+                          }
+
+                          return lottie;
+                        })
                       : Icon(
                           Icons.local_fire_department_outlined,
                           size: isSmallScreen ? 40 : 50,
