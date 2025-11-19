@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:lottie/lottie.dart';
 import '../../providers/auth_provider.dart';
 import '../../services/navigation_service.dart';
 import '../main_navigation_screen.dart';
@@ -79,10 +80,13 @@ class _LoginScreenState extends State<LoginScreen> {
                         color: Theme.of(context).colorScheme.primary,
                         borderRadius: BorderRadius.circular(20),
                       ),
-                      child: const Icon(
-                        Icons.local_fire_department,
-                        size: 40,
-                        color: Colors.white,
+                      child: Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Lottie.asset(
+                          'assets/animations/Flame animation(1).json',
+                          repeat: true,
+                          fit: BoxFit.contain,
+                        ),
                       ),
                     ),
                   ),
