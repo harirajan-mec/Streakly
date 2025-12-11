@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:provider/provider.dart';
-import 'package:google_fonts/google_fonts.dart';
 
-
+import 'config/app_theme.dart';
 import 'screens/auth/splash_screen.dart';
 import 'screens/auth/pin_auth_screen.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -14,6 +13,7 @@ import 'providers/theme_provider.dart';
 import 'services/admob_service.dart';
 import 'services/hive_service.dart';
 import 'notification_initializer.dart';
+import 'services/notification_service.dart';
 import 'services/purchase_service.dart';
 
 void main() async {
@@ -94,46 +94,18 @@ class _StreaklyAppState extends State<StreaklyApp> {
         ChangeNotifierProvider(create: (_) => NoteProvider()),
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
       ],
-      child: MaterialApp(
-        title: 'Streakly - Habit Tracker',
-        debugShowCheckedModeBanner: false,
-        // DevicePreview removed — using default locale and builder
-        theme: ThemeData(
-          useMaterial3: true,
-          colorScheme: const ColorScheme.dark(
-            primary: Color(0xFF9B5DE5), // Bright Purple
-            secondary: Color(0xFF9B5DE5),
-            surface: Color(0xFF121212),
-          ),
-          textTheme: GoogleFonts.interTextTheme(
-            ThemeData.dark().textTheme,
-          ),
-          appBarTheme: AppBarTheme(
-            centerTitle: true,
-            elevation: 0,
-            backgroundColor: Colors.transparent,
-            titleTextStyle: GoogleFonts.inter(
-              fontSize: 20,
-              fontWeight: FontWeight.w600,
-              color: Colors.white,
-            ),
-          ),
-          elevatedButtonTheme: ElevatedButtonThemeData(
-            style: ElevatedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-          ),
-          cardTheme: const CardTheme(
-            elevation: 2,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.all(Radius.circular(16)),
-            ),
-          ),
-        ),
-        home: widget.pinRequired ? const PinAuthScreen() : SplashScreen(),
+      child: Consumer<ThemeProvider>(
+        builder: (context, themeProvider, _) {
+          return MaterialApp(
+            title: 'Streakly - Habit Tracker',
+            debugShowCheckedModeBanner: false,
+            // DevicePreview removed — using default locale and builder
+            theme: AppTheme.light(),
+            darkTheme: AppTheme.dark(),
+            themeMode: themeProvider.themeMode,
+            home: widget.pinRequired ? const PinAuthScreen() : SplashScreen(),
+          );
+        },
       ),
     );
   }

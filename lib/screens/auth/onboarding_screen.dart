@@ -14,32 +14,35 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
 
-  final List<OnboardingPage> _pages = [
-    OnboardingPage(
-      title: 'Track Your Habits',
-      description: 'Build consistency by tracking your daily habits and routines with ease.',
-      icon: Icons.track_changes,
-      color: Colors.blue,
-    ),
-    OnboardingPage(
-      title: 'Build Streaks',
-      description: 'Stay motivated by building and maintaining streaks for your habits.',
-      icon: Icons.local_fire_department,
-      color: Colors.orange,
-    ),
-    OnboardingPage(
-      title: 'Take Notes',
-      description: 'Reflect on your progress with daily notes and insights.',
-      icon: Icons.note_alt,
-      color: Colors.green,
-    ),
-    OnboardingPage(
-      title: 'Earn Rewards',
-      description: 'Unlock achievements and discover products that support your journey.',
-      icon: Icons.emoji_events,
-      color: Color(0xFF9B5DE5),
-    ),
-  ];
+  List<OnboardingPage> _pages(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return [
+      OnboardingPage(
+        title: 'Track Your Habits',
+        description: 'Build consistency by tracking your daily habits and routines with ease.',
+        icon: Icons.track_changes,
+        color: scheme.primary,
+      ),
+      OnboardingPage(
+        title: 'Build Streaks',
+        description: 'Stay motivated by building and maintaining streaks for your habits.',
+        icon: Icons.local_fire_department,
+        color: scheme.secondary,
+      ),
+      OnboardingPage(
+        title: 'Take Notes',
+        description: 'Reflect on your progress with daily notes and insights.',
+        icon: Icons.note_alt,
+        color: scheme.tertiary,
+      ),
+      OnboardingPage(
+        title: 'Earn Rewards',
+        description: 'Unlock achievements and discover products that support your journey.',
+        icon: Icons.emoji_events,
+        color: scheme.primary,
+      ),
+    ];
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -55,9 +58,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     _currentPage = index;
                   });
                 },
-                itemCount: _pages.length,
+                itemCount: _pages(context).length,
                 itemBuilder: (context, index) {
-                  return _buildPage(_pages[index]);
+                  return _buildPage(_pages(context)[index]);
                 },
               ),
             ),
@@ -127,7 +130,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: List.generate(
-              _pages.length,
+              _pages(context).length,
               (index) => Container(
                 margin: const EdgeInsets.symmetric(horizontal: 4),
                 width: _currentPage == index ? 24 : 8,
@@ -168,7 +171,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   child: const Text(''),
                 ),
               const Spacer(),
-              if (_currentPage < _pages.length - 1)
+              if (_currentPage < _pages(context).length - 1)
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Theme.of(context).colorScheme.primary,

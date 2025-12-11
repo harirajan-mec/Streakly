@@ -14,10 +14,11 @@ void main() {
     // Build our app and trigger a frame.
     await tester.pumpWidget(const StreaklyApp());
 
-    // Verify that the app launches without crashing
-    await tester.pumpAndSettle();
-    
-    // Check if splash screen is displayed
+    // Let initial microtasks run and verify splash renders
+    await tester.pump(const Duration(milliseconds: 100));
     expect(find.text('Streakly'), findsOneWidget);
+
+    // Advance time to allow splash timers to complete so no pending timers remain
+    await tester.pump(const Duration(seconds: 6));
   });
 }

@@ -3,20 +3,18 @@ import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../providers/theme_provider.dart';
 import 'package:share_plus/share_plus.dart'; // This is still needed for sharing
 import 'package:url_launcher/url_launcher.dart';
-import '../../providers/auth_provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../providers/habit_provider.dart';
 import '../../providers/note_provider.dart';
 import '../../models/habit.dart';
 import '../../services/export_import_service.dart';
-import '../../widgets/modern_button.dart';
-import '../main/main_navigation.dart';
 import '../auth/splash_screen.dart';
 import 'analysis_screen.dart';
 import '../subscription/subscription_plans_screen.dart';
 import '../../widgets/hero_stats_card.dart';
-import '../reminders/test_notification_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -44,9 +42,9 @@ class ProfileScreen extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.only(right: 16.0),
             child: IconButton(
-              icon: const Icon(
+              icon: Icon(
                 Icons.workspace_premium,
-                color: Color(0xFFFFD700), // Gold color
+                color: theme.colorScheme.secondary,
                 size: 28,
               ),
               onPressed: () {
@@ -156,7 +154,7 @@ class ProfileScreen extends StatelessWidget {
                   title: 'Current Streaks',
                   value: '$currentAllHabitsStreak',
                   icon: Icons.local_fire_department,
-                  color: Color(0xFF9B5DE5),
+                  color: Theme.of(context).colorScheme.primary,
                 ),
               ),
               const SizedBox(width: 12),
@@ -166,7 +164,7 @@ class ProfileScreen extends StatelessWidget {
                   title: 'Best Streak',
                   value: '$bestAllHabitsStreak',
                   icon: Icons.emoji_events,
-                  color: Colors.amber,
+                  color: Theme.of(context).colorScheme.secondary,
                 ),
               ),
               const SizedBox(width: 12),
@@ -176,7 +174,7 @@ class ProfileScreen extends StatelessWidget {
                   title: 'Score',
                   value: '$score',
                   icon: Icons.star,
-                  color: Color(0xFF9B5DE5),
+                  color: Theme.of(context).colorScheme.primary,
                 ),
               ),
             ],
@@ -207,7 +205,7 @@ class ProfileScreen extends StatelessWidget {
                 title: 'Total Streaks',
                 value: '${habitProvider.totalStreaks}',
                 icon: Icons.local_fire_department,
-                color: Color(0xFF9B5DE5),
+                  color: Theme.of(context).colorScheme.primary,
               ),
             ),
             const SizedBox(width: 12),
@@ -285,12 +283,35 @@ class ProfileScreen extends StatelessWidget {
         _buildMenuCard(
           context,
           [
+            Consumer<ThemeProvider>(
+              builder: (context, themeProvider, _) {
+                final isDark = themeProvider.isDarkMode;
+                return _buildMenuItem(
+                  context,
+                  title: 'Theme',
+                  subtitle: isDark ? 'Dark mode' : 'Light mode',
+                  icon: isDark ? Icons.dark_mode : Icons.light_mode,
+                  iconColor: Theme.of(context).colorScheme.primary,
+                  trailing: Switch.adaptive(
+                    value: isDark,
+                    onChanged: (value) => themeProvider.setDarkMode(value),
+                  ),
+                  onTap: () => themeProvider.toggleTheme(),
+                );
+              },
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        _buildMenuCard(
+          context,
+          [
             _buildMenuItem(
               context,
               title: 'Analysis',
               subtitle: 'View your habit statistics and progress',
               icon: Icons.analytics,
-              iconColor: Color(0xFF9B5DE5),
+              iconColor: Theme.of(context).colorScheme.primary,
               onTap: () {
                 Navigator.of(context).push(
                   MaterialPageRoute(builder: (_) => const AnalysisScreen()),
@@ -306,7 +327,7 @@ class ProfileScreen extends StatelessWidget {
             _buildMenuItem(
               context,
               title: 'Backup Data',
-              subtitle: 'Export or import your habits, notes, and settings',
+              subtitle: 'Export or import your habits, notes',
               icon: Icons.cloud_sync,
               iconColor: Colors.tealAccent,
               onTap: () => _showBackupDialog(context),
@@ -319,12 +340,12 @@ class ProfileScreen extends StatelessWidget {
           [
             _buildMenuItem(
               context,
-              title: 'Notification Settings',
-              subtitle: 'Test and manage your habit reminders',
-              icon: Icons.notifications_active,
+              title: 'Widget Settings',
+              subtitle: 'Configure home widget display',
+              icon: Icons.widgets,
               iconColor: Colors.blueAccent,
               onTap: () {
-                _showNotificationSettingsDialog(context);
+                _showWidgetDialog(context);
               },
             ),
           ],
@@ -403,25 +424,9 @@ class ProfileScreen extends StatelessWidget {
               title: 'Terms of Service',
               subtitle: 'View terms and conditions of use',
               icon: Icons.description_outlined,
-              iconColor: Color(0xFF9B5DE5),
+              iconColor: Theme.of(context).colorScheme.primary,
               onTap: () {
                 _showTermsOfService(context);
-              },
-            ),
-          ],
-        ),
-        const SizedBox(height: 16),
-        _buildMenuCard(
-          context,
-          [
-            _buildMenuItem(
-              context,
-              title: 'Sign Out',
-              subtitle: 'Sign out of your account',
-              icon: Icons.logout,
-              iconColor: Colors.redAccent,
-              onTap: () {
-                _showSignOutDialog(context);
               },
             ),
           ],
@@ -524,8 +529,8 @@ class ProfileScreen extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            const Icon(Icons.local_fire_department,
-                color: Color(0xFF9B5DE5), size: 40),
+            Icon(Icons.local_fire_department,
+              color: theme.colorScheme.primary, size: 40),
             const SizedBox(height: 16),
             Text(
               'Enjoying Streakly? Share it with your friends and help them build great habits too!',
@@ -564,6 +569,100 @@ class ProfileScreen extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+
+  void _showWidgetDialog(BuildContext context) {
+    final habitProvider = Provider.of<HabitProvider>(context, listen: false);
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.primary.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(Icons.widgets, color: Theme.of(context).colorScheme.primary),
+              ),
+              const SizedBox(width: 12),
+              const Text('Widget Settings'),
+            ],
+          ),
+          content: FutureBuilder<SharedPreferences>(
+            future: SharedPreferences.getInstance(),
+            builder: (context, snap) {
+              final prefs = snap.data;
+              final mode = prefs?.getString('widget_mode') ?? 'all';
+              final selectedId = prefs?.getString('widget_habit_id');
+              final habits = habitProvider.activeHabits;
+
+              return SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    RadioListTile<String>(
+                      value: 'all',
+                      groupValue: mode,
+                      title: const Text('All habits'),
+                      subtitle: const Text('Show calendar for days when all habits completed'),
+                      onChanged: (v) async {
+                        final p = await SharedPreferences.getInstance();
+                        await p.setString('widget_mode', 'all');
+                        await habitProvider.refreshWidget();
+                        if (context.mounted) Navigator.of(context).pop();
+                      },
+                    ),
+                    RadioListTile<String>(
+                      value: 'per',
+                      groupValue: mode,
+                      title: const Text('Per habit'),
+                      subtitle: const Text('Show calendar for a selected habit'),
+                      onChanged: (v) async {
+                        final p = await SharedPreferences.getInstance();
+                        await p.setString('widget_mode', 'per');
+                        if (selectedId == null && habits.isNotEmpty) {
+                          await p.setString('widget_habit_id', habits.first.id);
+                        }
+                        await habitProvider.refreshWidget();
+                        if (context.mounted) Navigator.of(context).pop();
+                      },
+                    ),
+                    if (mode == 'per') ...[
+                      const SizedBox(height: 6),
+                      Text('Select habit', style: Theme.of(context).textTheme.bodyMedium),
+                      const SizedBox(height: 6),
+                      habits.isEmpty
+                          ? const Text('No active habits available')
+                          : DropdownButton<String>(
+                              value: selectedId ?? habits.first.id,
+                              isExpanded: true,
+                              items: habits.map((h) => DropdownMenuItem(value: h.id, child: Text(h.name))).toList(),
+                              onChanged: (val) async {
+                                if (val == null) return;
+                                final p = await SharedPreferences.getInstance();
+                                await p.setString('widget_habit_id', val);
+                                await habitProvider.refreshWidget();
+                                if (context.mounted) Navigator.of(context).pop();
+                              },
+                            ),
+                    ],
+                  ],
+                ),
+              );
+            },
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Close')),
+          ],
+        );
+      },
     );
   }
 
@@ -651,7 +750,7 @@ class ProfileScreen extends StatelessWidget {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Row(
           children: [
-            Icon(Icons.description_outlined, color: Color(0xFF9B5DE5)),
+            Icon(Icons.description_outlined, color: Theme.of(context).colorScheme.primary),
             const SizedBox(width: 8),
             const Text('Terms of Service'),
           ],
@@ -1015,48 +1114,6 @@ class ProfileScreen extends StatelessWidget {
     });
   }
 
-  void _showSignOutDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('Sign Out'),
-        content: const Text('Are you sure you want to sign out?'),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Flexible(
-                  child: ModernButton(
-                    text: 'Cancel',
-                    type: ModernButtonType.outline,
-                    onPressed: () => Navigator.of(context).pop(),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Flexible(
-                  child: ModernButton(
-                    text: 'Sign Out',
-                    type: ModernButtonType.destructive,
-                      onPressed: () {
-                      Provider.of<AuthProvider>(context, listen: false).logout();
-                      Navigator.of(context).pushAndRemoveUntil(
-                        MaterialPageRoute(builder: (_) => const MainNavigation()),
-                        (route) => false,
-                      );
-                    },
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   
 
   void _showBackupDialog(BuildContext context) {
@@ -1134,10 +1191,10 @@ class ProfileScreen extends StatelessWidget {
                   leading: Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: Color(0xFF9B5DE5).withAlpha((0.16 * 255).round()),
+                      color: Theme.of(context).colorScheme.primary.withAlpha((0.16 * 255).round()),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: const Icon(Icons.upload_file, color: Color(0xFF9B5DE5)),
+                    child: Icon(Icons.upload_file, color: Theme.of(context).colorScheme.primary),
                   ),
                   title: const Text('Import Backup'),
                   subtitle: const Text('Restore from a JSON file exported from Streakly'),
@@ -1257,98 +1314,7 @@ class ProfileScreen extends StatelessWidget {
     }
   }
 
-  void _showNotificationSettingsDialog(BuildContext context) {
-    final theme = Theme.of(context);
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: Colors.blueAccent.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: const Icon(
-                Icons.notifications_active,
-                color: Colors.blueAccent,
-              ),
-            ),
-            const SizedBox(width: 12),
-            const Text('Notification Settings'),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Colors.blue.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Icon(Icons.bug_report, color: Colors.blue),
-              ),
-              title: const Text('Test Notifications'),
-              subtitle: const Text('Debug and test notification system'),
-              trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-              onTap: () {
-                Navigator.of(context).pop();
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const TestNotificationScreen(),
-                  ),
-                );
-              },
-            ),
-            const Divider(),
-            ListTile(
-              leading: Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Color(0xFF9B5DE5).withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Icon(Icons.schedule, color: Color(0xFF9B5DE5)),
-              ),
-              title: const Text('Scheduled Reminders'),
-              subtitle: Consumer<HabitProvider>(
-                builder: (context, habitProvider, child) {
-                  final habitsWithReminders = habitProvider.activeHabits
-                      .where((h) => h.reminderTime != null)
-                      .length;
-                  return Text(
-                      '$habitsWithReminders habit(s) have reminders set');
-                },
-              ),
-              trailing: const Icon(Icons.info_outline, size: 16),
-            ),
-            const Divider(),
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Text(
-                'You can set reminders when creating or editing habits. Each habit can have its own custom reminder time.',
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurface.withOpacity(0.6),
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Close'),
-          ),
-        ],
-      ),
-    );
-  }
+
 
   int _calculateTotalScore(HabitProvider habitProvider) {
     final activeHabits = habitProvider.activeHabits;

@@ -81,9 +81,11 @@ class PersistentNavigationWrapper extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            Expanded(child: _buildNavItem(0, Icons.track_changes_outlined, Icons.track_changes, 'Habits', context)),
+            Expanded(child: _buildNavItem(0, Icons.track_changes_outlined, Icons.track_changes, 'Home', context)),
+            Expanded(child: _buildNavItem(1, Icons.analytics_outlined, Icons.analytics, 'Analysis', context)),
             const SizedBox(width: 60), // Space for FAB
-            Expanded(child: _buildNavItem(1, Icons.note_outlined, Icons.note, 'Notes', context)),
+            Expanded(child: _buildNavItem(2, Icons.mood_outlined, Icons.mood, 'Mood', context)),
+            Expanded(child: _buildNavItem(3, Icons.note_outlined, Icons.note, 'Notes', context)),
           ],
         ),
       ),

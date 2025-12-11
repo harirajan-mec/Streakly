@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:lottie/lottie.dart';
 import 'package:provider/provider.dart';
 import '../../providers/note_provider.dart';
 import '../../providers/habit_provider.dart';
 import '../../models/habit.dart';
 import '../../models/note.dart';
+import '../subscription/subscription_plans_screen.dart';
 
 class NotesScreen extends StatefulWidget {
-  const NotesScreen({super.key});
+  final bool showAppBar;
+  const NotesScreen({super.key, this.showAppBar = true});
 
   @override
   State<NotesScreen> createState() => _NotesScreenState();
@@ -15,7 +16,7 @@ class NotesScreen extends StatefulWidget {
 
 class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
   final TextEditingController _searchController = TextEditingController();
-  bool _isSearching = false;
+  // Removed local `_isSearching` in favor of provider-driven `showSearch` state
   List<Note> _filteredNotes = [];
 
   @override
@@ -71,57 +72,59 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
 
   Widget _buildEmptyState(BuildContext context) {
     final theme = Theme.of(context);
-
-    return Center(
-      child: Container(
-        padding: const EdgeInsets.all(32),
-        decoration: BoxDecoration(
-          color: theme.cardColor,
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: theme.colorScheme.outline.withAlpha((0.1 * 255).round())),
-          boxShadow: [
-            BoxShadow(
-              color: theme.colorScheme.primary.withAlpha((0.05 * 255).round()),
-              blurRadius: 20,
-              offset: const Offset(0, 8),
-            ),
-          ],
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 80,
-              height: 80,
+    // Make empty state scrollable to avoid RenderFlex overflow in constrained layouts
+    return SingleChildScrollView(
+      child: Center(
+        child: Container(
+          padding: const EdgeInsets.all(32),
+          decoration: BoxDecoration(
+            color: theme.cardColor,
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: theme.colorScheme.outline.withAlpha((0.1 * 255).round())),
+            boxShadow: [
+              BoxShadow(
+                color: theme.colorScheme.primary.withAlpha((0.05 * 255).round()),
+                blurRadius: 20,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 80,
+                height: 80,
                 decoration: BoxDecoration(
-                color: theme.colorScheme.primary.withAlpha((0.1 * 255).round()),
-                borderRadius: BorderRadius.circular(20),
+                  color: theme.colorScheme.primary.withAlpha((0.1 * 255).round()),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Icon(
+                  Icons.note_add_outlined,
+                  size: 40,
+                  color: theme.colorScheme.primary,
+                ),
               ),
-              child: Icon(
-                Icons.note_add_outlined,
-                size: 40,
-                color: theme.colorScheme.primary,
+              const SizedBox(height: 24),
+              Text(
+                'No Notes Yet',
+                style: theme.textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: theme.colorScheme.onSurface,
+                ),
               ),
-            ),
-            const SizedBox(height: 24),
-            Text(
-              'No Notes Yet',
-              style: theme.textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: theme.colorScheme.onSurface,
+              const SizedBox(height: 8),
+              Text(
+                'Start documenting your habit journey!\nCapture insights, reflections, and progress.',
+                textAlign: TextAlign.center,
+                style: theme.textTheme.bodyLarge?.copyWith(
+                  color: theme.colorScheme.onSurface.withAlpha((0.7 * 255).round()),
+                  height: 1.5,
+                ),
               ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Start documenting your habit journey!\nCapture insights, reflections, and progress.',
-              textAlign: TextAlign.center,
-              style: theme.textTheme.bodyLarge?.copyWith(
-                color: theme.colorScheme.onSurface.withAlpha((0.7 * 255).round()),
-                height: 1.5,
-              ),
-            ),
-            const SizedBox(height: 24),
-          ],
+              const SizedBox(height: 24),
+            ],
+          ),
         ),
       ),
     );
@@ -450,76 +453,113 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
     final theme = Theme.of(context);
 
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: theme.colorScheme.surface.withAlpha((0.95 * 255).round()),
-        elevation: 0,
-        titleSpacing: 0,
-        title: Row(
-          children: [
-            const SizedBox(width: 16),
-            SizedBox(
-              height: 40,
-              width: 40,
-              child: Lottie.asset(
-                'assets/animations/Flame animation(1).json',
-                repeat: true,
-                fit: BoxFit.contain,
+      appBar: widget.showAppBar
+          ? AppBar(
+              backgroundColor: theme.colorScheme.surface.withAlpha((0.95 * 255).round()),
+              elevation: 0,
+              titleSpacing: 0,
+              title: Row(
+                children: [
+                  const SizedBox(width: 16),
+                  Container(
+                    width: 40,
+                    height: 40,
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.primary.withAlpha((0.12 * 255).round()),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(
+                      Icons.note_outlined,
+                      color: theme.colorScheme.primary,
+                      size: 20,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    'Notes',
+                    style: theme.textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
               ),
-            ),
-            const SizedBox(width: 8),
-            Text(
-              'Streakly',
-              style: theme.textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          IconButton(
-            icon: Icon(_isSearching ? Icons.close : Icons.search),
-            splashRadius: 22,
-            onPressed: () {
-              if (!mounted) return;
-              setState(() {
-                _isSearching = !_isSearching;
-                if (!_isSearching) {
-                  _searchController.clear();
-                  final noteProvider =
-                      Provider.of<NoteProvider>(context, listen: false);
-                  _filteredNotes = noteProvider.notes;
-                }
-              });
-            },
-          ),
-          const SizedBox(width: 4),
-        ],
-      ),
+              actions: [
+                // Subscription icon near the search icon; mirrors shared top bar placement
+                IconButton(
+                  icon: Icon(
+                    Icons.workspace_premium,
+                    color: theme.colorScheme.secondary,
+                    size: 24,
+                  ),
+                  tooltip: 'Subscription',
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => SubscriptionPlansScreen(),
+                      ),
+                    );
+                  },
+                ),
+                IconButton(
+                  icon: Consumer<NoteProvider>(
+                    builder: (context, provider, _) => Icon(
+                      provider.showSearch ? Icons.close : Icons.search,
+                    ),
+                  ),
+                  splashRadius: 22,
+                  onPressed: () {
+                    if (!mounted) return;
+                    final provider = Provider.of<NoteProvider>(context, listen: false);
+                    provider.toggleShowSearch();
+                    if (!provider.showSearch) {
+                      _searchController.clear();
+                      final noteProvider = Provider.of<NoteProvider>(context, listen: false);
+                      setState(() {
+                        _filteredNotes = noteProvider.notes;
+                      });
+                    }
+                  },
+                ),
+                const SizedBox(width: 4),
+              ],
+            )
+          : null,
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (_isSearching)
-              Container(
-                margin: const EdgeInsets.only(bottom: 16),
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                decoration: BoxDecoration(
-                  color: theme.cardColor,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                      color: theme.colorScheme.outline.withAlpha((0.2 * 255).round())),
-                ),
-                child: TextField(
-                  controller: _searchController,
-                  onChanged: _filterNotes,
-                  decoration: const InputDecoration(
-                    hintText: 'Search notes...',
-                    border: InputBorder.none,
-                    icon: Icon(Icons.search),
+            Consumer<NoteProvider>(
+              builder: (context, provider, _) {
+                if (!provider.showSearch) return const SizedBox.shrink();
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 16),
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  decoration: BoxDecoration(
+                    color: theme.cardColor,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                        color: theme.colorScheme.outline.withAlpha((0.2 * 255).round())),
                   ),
-                ),
-              ),
+                  child: TextField(
+                    controller: _searchController,
+                    onChanged: _filterNotes,
+                    decoration: const InputDecoration(
+                      hintText: 'Search notes...',
+                      prefixIcon: Icon(Icons.search),
+                      prefixIconConstraints: BoxConstraints(minWidth: 40),
+                      border: InputBorder.none,
+                      enabledBorder: InputBorder.none,
+                      focusedBorder: InputBorder.none,
+                      disabledBorder: InputBorder.none,
+                      isDense: true,
+                      contentPadding: EdgeInsets.symmetric(vertical: 12),
+                    ),
+                  ),
+                );
+              },
+            ),
             // 'Reflect on your progress' card removed per request
             Expanded(
               child: Consumer<NoteProvider>(
@@ -528,17 +568,16 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
                     return const Center(child: CircularProgressIndicator());
                   }
 
-                  final notesToShow =
-                      _isSearching && _searchController.text.isNotEmpty
-                          ? _filteredNotes
-                          : noteProvider.notes;
+                  final notesToShow = noteProvider.showSearch && _searchController.text.isNotEmpty
+                      ? _filteredNotes
+                      : noteProvider.notes;
 
                   if (notesToShow.isEmpty) {
                     return _buildEmptyState(context);
                   }
 
                   // Update filtered notes if not searching
-                  if (!_isSearching || _searchController.text.isEmpty) {
+                  if (!noteProvider.showSearch || _searchController.text.isEmpty) {
                     _filteredNotes = notesToShow;
                   }
 

@@ -99,39 +99,39 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
     Icons.workspace_premium,
   ];
 
-  final List<Color> _availableColors = [
-    Colors.blue,
-    Colors.green,
-    Colors.red,
-    Colors.orange,
-    Color(0xFF9B5DE5),
-    Colors.pink,
-    Colors.teal,
-    Colors.indigo,
-    Colors.cyan,
-    Colors.amber,
-    Colors.lime,
-    Colors.purple,
-    Colors.blueGrey,
-    Colors.brown,
-    Colors.grey,
-    const Color(0xFF6B46C1),
-    const Color(0xFF10B981),
-    const Color(0xFFF59E0B),
-    const Color(0xFFEF4444),
-    const Color(0xFF8B5CF6),
-    const Color(0xFF06B6D4),
-    const Color(0xFFEC4899),
-    const Color(0xFF84CC16),
-    const Color(0xFFF97316),
-    const Color(0xFF3B82F6),
-    const Color(0xFF14B8A6),
-    const Color(0xFFA855F7),
-    const Color(0xFFE11D48),
-    const Color(0xFF22C55E),
-    const Color(0xFF64748B),
-    const Color(0xFF78716C),
-  ];
+  List<Color> _availableColors(BuildContext context) => [
+        Colors.blue,
+        Colors.green,
+        Colors.red,
+        Colors.orange,
+        Theme.of(context).colorScheme.primary,
+        Colors.pink,
+        Colors.teal,
+        Colors.indigo,
+        Colors.cyan,
+        Colors.amber,
+        Colors.lime,
+        Colors.purple,
+        Colors.blueGrey,
+        Colors.brown,
+        Colors.grey,
+        const Color(0xFF6B46C1),
+        const Color(0xFF10B981),
+        const Color(0xFFF59E0B),
+        const Color(0xFFEF4444),
+        const Color(0xFF8B5CF6),
+        const Color(0xFF06B6D4),
+        const Color(0xFFEC4899),
+        const Color(0xFF84CC16),
+        const Color(0xFFF97316),
+        const Color(0xFF3B82F6),
+        const Color(0xFF14B8A6),
+        const Color(0xFFA855F7),
+        const Color(0xFFE11D48),
+        const Color(0xFF22C55E),
+        const Color(0xFF64748B),
+        const Color(0xFF78716C),
+      ];
 
   @override
   void initState() {
@@ -366,7 +366,7 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
                       border: Border.all(
                         color: isSelected
                           ? Theme.of(context).colorScheme.primary
-                          : Colors.white.withAlpha((0.06 * 255).round()),
+                          : Theme.of(context).colorScheme.outline.withAlpha((0.12 * 255).round()),
                         width: isSelected ? 2 : 1,
                       ),
                       boxShadow: isSelected
@@ -391,7 +391,7 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
                         size: 24,
                         color: isSelected
                           ? Colors.white
-                          : Colors.white.withAlpha((0.7 * 255).round()),
+                          : Theme.of(context).colorScheme.onSurface.withAlpha((0.7 * 255).round()),
                       ),
                     ),
                   ),
@@ -428,7 +428,7 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
             child: Wrap(
               spacing: 10,
               runSpacing: 10,
-              children: _availableColors.map((color) {
+              children: _availableColors(context).map((color) {
                 final isSelected = color == _selectedColor;
                 return GestureDetector(
                   onTap: () {
@@ -519,7 +519,7 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
                         border: Border.all(
                           color: isSelected
                               ? (isBuild ? Colors.green : Colors.red)
-                              : Colors.white.withOpacity(0.06),
+                              : Theme.of(context).colorScheme.outline.withAlpha((0.12 * 255).round()),
                           width: isSelected ? 2 : 1,
                         ),
                         boxShadow: isSelected
@@ -537,8 +537,8 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
                           Icon(
                             isBuild ? Icons.trending_up : Icons.trending_down,
                             color: isSelected
-                                ? Colors.white
-                                : Colors.white.withOpacity(0.7),
+                              ? Colors.white
+                              : Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
                             size: 24,
                           ),
                           const SizedBox(height: 8),
@@ -547,8 +547,8 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
                             textAlign: TextAlign.center,
                             style: Theme.of(context).textTheme.titleSmall?.copyWith(
                                   color: isSelected
-                                      ? Colors.white
-                                      : Colors.white.withOpacity(0.7),
+                                ? Colors.white
+                                : Theme.of(context).colorScheme.onSurface.withOpacity(0.8),
                                   fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                                 ),
                           ),
@@ -558,8 +558,8 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
                             textAlign: TextAlign.center,
                             style: Theme.of(context).textTheme.bodySmall?.copyWith(
                                   color: isSelected
-                                      ? Colors.white.withOpacity(0.8)
-                                      : Colors.white.withOpacity(0.5),
+                                ? Colors.white.withOpacity(0.8)
+                                : Theme.of(context).colorScheme.onSurface.withOpacity(0.55),
                                 ),
                           ),
                         ],
@@ -738,7 +738,7 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
             label,
             style: theme.textTheme.titleSmall?.copyWith(
               fontWeight: FontWeight.w600,
-              color: Colors.white.withAlpha((0.85 * 255).round()),
+              color: theme.colorScheme.onSurface,
             ),
           ),
           const SizedBox(height: 10),
@@ -753,12 +753,12 @@ class _AddHabitScreenState extends State<AddHabitScreen> {
               maxLines: maxLines,
               validator: validator,
               style: theme.textTheme.bodyLarge?.copyWith(
-                color: Colors.white,
+                color: theme.colorScheme.onSurface,
               ),
               decoration: InputDecoration(
                 hintText: hint,
                   hintStyle: theme.textTheme.bodyMedium?.copyWith(
-                  color: Colors.white.withAlpha((0.5 * 255).round()),
+                  color: theme.colorScheme.onSurface.withAlpha((0.6 * 255).round()),
                 ),
                 border: InputBorder.none,
                 contentPadding: const EdgeInsets.symmetric(

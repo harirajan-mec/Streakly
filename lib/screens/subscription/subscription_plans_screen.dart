@@ -150,6 +150,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
     ProductDetails? product,
   }) {
     final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
     return Card(
       elevation: 4,
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -157,10 +158,10 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
         borderRadius: BorderRadius.circular(20),
         side: BorderSide(
           color: title == 'Free'
-              ? Colors.white
+              ? scheme.surface
               : title == 'Monthly Pro'
-                  ? const Color(0xFF9B5DE5) // Bright Purple
-                  : const Color(0xFFFFD700),
+                  ? scheme.primary
+                  : scheme.secondary,
           width: 2,
         ),
       ),
@@ -241,17 +242,19 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
                 onPressed: title == 'Free' || product == null || _isPremium ? null : () => _buy(product),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: title == 'Free'
-                      ? Colors.white
+                      ? scheme.surface
                       : title == 'Monthly Pro'
-                          ? const Color(0xFF9B5DE5) // Bright Purple
-                          : const Color(0xFFFFD700),
+                          ? scheme.primary
+                          : scheme.secondary,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  foregroundColor: title == 'Free' || title == 'Yearly Pro'
-                      ? Colors.black // Black text for white and gold buttons
-                      : Colors.white, // White text for purple button
+                  foregroundColor: title == 'Free'
+                      ? scheme.onSurface
+                      : title == 'Yearly Pro'
+                          ? scheme.onSecondary
+                          : scheme.onPrimary,
                 ),
                 child: Text(
                   title == 'Free' ? 'Current Plan' : (_isPremium ? 'Purchased' : 'Subscribe'),
@@ -385,7 +388,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
               title: 'Yearly Pro',
               price: '₹999',
               duration: '/year',
-              accentColor: const Color(0xFFFFD700), // Gold color
+              accentColor: theme.colorScheme.secondary,
               product: _products.isNotEmpty 
                   ? _products.firstWhere(
                       (p) => p.id.contains('yearly'), 

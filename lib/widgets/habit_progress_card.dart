@@ -42,9 +42,9 @@ class HabitProgressCard extends StatelessWidget {
             child: Row(
               children: [
                 Container(
-                  width: 40,
-                  height: 40,
-                  padding: const EdgeInsets.all(2),
+                  width: 44,
+                  height: 44,
+                  padding: const EdgeInsets.all(3),
                   decoration: const BoxDecoration(
                     shape: BoxShape.circle,
                   ),
@@ -56,7 +56,7 @@ class HabitProgressCard extends StatelessWidget {
                     child: Icon(
                       habit.icon,
                       color: habit.color,
-                      size: 20,
+                      size: 24,
                     ),
                   ),
                 ),
@@ -102,22 +102,23 @@ class HabitProgressCard extends StatelessWidget {
                           const SizedBox(width: 12),
                           // Streak Badge
                           ShaderMask(
-                              shaderCallback: (Rect bounds) {
-                                return LinearGradient(
-                                  begin: Alignment.topCenter,
-                                  end: Alignment.bottomCenter,
-                                  colors: [
-                                    Color(0xFFD0A9F5),
-                                    Color(0xFF9B5DE5),
-                                  ],
-                                ).createShader(bounds);
-                              },
-                              child: const Icon(
-                                Icons.local_fire_department,
-                                size: 12,
-                                color: Colors.white,
-                              ),
+                            shaderCallback: (Rect bounds) {
+                              final primary = theme.colorScheme.primary;
+                              return LinearGradient(
+                                begin: Alignment.topCenter,
+                                end: Alignment.bottomCenter,
+                                colors: [
+                                  primary.withOpacity(0.55),
+                                  primary,
+                                ],
+                              ).createShader(bounds);
+                            },
+                            child: const Icon(
+                              Icons.local_fire_department,
+                              size: 12,
+                              color: Colors.white,
                             ),
+                          ),
                           const SizedBox(width: 4),
                           Text(
                             '${habit.currentStreak} day streak',
@@ -131,12 +132,12 @@ class HabitProgressCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 12),
-                Row(
+                    Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    HabitNoteIconButton(habit: habit),
-                    const SizedBox(width: 6),
-                    MultiCompletionButton(habit: habit),
+                    HabitNoteIconButton(habit: habit, size: 36),
+                    const SizedBox(width: 8),
+                    MultiCompletionButton(habit: habit, size: 36),
                   ],
                 ),
               ],

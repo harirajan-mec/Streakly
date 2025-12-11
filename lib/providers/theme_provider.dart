@@ -2,28 +2,38 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ThemeProvider with ChangeNotifier {
-  bool _isDarkMode = false;
-  
+  // Default to dark to preserve the existing app experience until the user switches.
+  bool _isDarkMode = true;
+
   bool get isDarkMode => _isDarkMode;
-  
+  ThemeMode get themeMode => _isDarkMode ? ThemeMode.dark : ThemeMode.light;
+
   ThemeProvider() {
     _loadThemeFromPrefs();
   }
-  
+
+  Future<void> setDarkMode(bool isDark) async {
+    await _setDarkMode(isDark);
+  }
+
   void toggleTheme() {
-    _isDarkMode = !_isDarkMode;
-    _saveThemeToPrefs();
+    _setDarkMode(!_isDarkMode);
+  }
+
+  Future<void> _setDarkMode(bool isDark) async {
+    _isDarkMode = isDark;
+    await _saveThemeToPrefs();
     notifyListeners();
   }
-  
-  void _loadThemeFromPrefs() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    _isDarkMode = prefs.getBool('isDarkMode') ?? false;
+
+  Future<void> _loadThemeFromPrefs() async {
+    final prefs = await SharedPreferences.getInstance();
+    _isDarkMode = prefs.getBool('isDarkMode') ?? true;
     notifyListeners();
   }
-  
-  void _saveThemeToPrefs() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    prefs.setBool('isDarkMode', _isDarkMode);
+
+  Future<void> _saveThemeToPrefs() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('isDarkMode', _isDarkMode);
   }
 }

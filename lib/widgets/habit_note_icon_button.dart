@@ -9,34 +9,58 @@ import '../providers/note_provider.dart';
 class HabitNoteIconButton extends StatelessWidget {
   final Habit habit;
   final double size;
+  final bool isSquare;
 
   const HabitNoteIconButton({
     super.key,
     required this.habit,
-    this.size = 32,
+    this.size = 44,
+    this.isSquare = false,
   });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    final borderColor = habit.color;
+    final bgColor = habit.color;
+    final iconColor = Theme.of(context).brightness == Brightness.dark ? Colors.black : Colors.white;
 
     return GestureDetector(
       onTap: () => _showAddNoteDialog(context),
       child: Tooltip(
         message: 'Add note',
-        child: Container(
+          child: Container(
           width: size,
           height: size,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            border: Border.all(color: borderColor, width: 2),
-          ),
-          child: Icon(
-            Icons.sticky_note_2_outlined,
-            color: borderColor,
-            size: size * 0.6,
+          decoration: isSquare
+              ? BoxDecoration(
+                  color: bgColor,
+                  borderRadius: BorderRadius.circular(10),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.12),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                )
+              : BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: bgColor,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.12),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+          child: Center(
+            child: Icon(
+              Icons.sticky_note_2,
+              color: iconColor,
+              size: size * (isSquare ? 0.55 : 0.58),
+            ),
           ),
         ),
       ),

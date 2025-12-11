@@ -7,7 +7,9 @@ import 'package:file_picker/file_picker.dart';
 import '../../services/export_import_service.dart';
 import '../../providers/habit_provider.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/theme_provider.dart';
 import '../../widgets/modern_button.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -25,6 +27,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final themeProvider = context.watch<ThemeProvider>();
 
     return Scaffold(
       appBar: AppBar(
@@ -108,8 +111,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
             context,
             title: 'General',
             icon: Icons.settings_outlined,
-            accent: Color(0xFF9B5DE5),
+            accent: theme.colorScheme.primary,
             children: [
+              _buildToggleTile(
+                context,
+                title: 'Dark Mode',
+                subtitle: themeProvider.isDarkMode ? 'Currently using dark theme' : 'Currently using light theme',
+                icon: themeProvider.isDarkMode ? Icons.dark_mode : Icons.light_mode,
+                value: themeProvider.isDarkMode,
+                onChanged: (value) {
+                  themeProvider.setDarkMode(value);
+                },
+              ),
               _buildActionTile(
                 context,
                 title: 'Language',
@@ -131,6 +144,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 icon: Icons.upload_file,
                 onTap: _showImportDialog,
               ),
+              const SizedBox(height: 8),
+              _buildWidgetSettingsTile(context),
             ],
           ),
           const SizedBox(height: 18),
@@ -138,7 +153,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             context,
             title: 'Privacy & Security',
             icon: Icons.lock_outline,
-            accent: Color(0xFF9B5DE5),
+            accent: theme.colorScheme.primary,
             children: [
               _buildActionTile(
                 context,
@@ -412,6 +427,78 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ],
         ],
       ),
+    );
+  }
+
+  Widget _buildWidgetSettingsTile(BuildContext context) {
+    return FutureBuilder<SharedPreferences>(
+      future: SharedPreferences.getInstance(),
+      builder: (context, snap) {
+        final prefs = snap.data;
+        final mode = prefs?.getString('widget_mode') ?? 'all';
+        final selectedId = prefs?.getString('widget_habit_id');
+        final habitProvider = Provider.of<HabitProvider>(context);
+        final habits = habitProvider.activeHabits;
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 6),
+            Text('Widget', style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700)),
+            const SizedBox(height: 8),
+            RadioListTile<String>(
+              value: 'all',
+              groupValue: mode,
+              title: const Text('All habits'),
+              subtitle: const Text('Show calendar for days when all habits completed'),
+              onChanged: (v) async {
+                final p = await SharedPreferences.getInstance();
+                await p.setString('widget_mode', 'all');
+                // refresh widget
+                await habitProvider.refreshWidget();
+                setState(() {});
+              },
+            ),
+            RadioListTile<String>(
+              value: 'per',
+              groupValue: mode,
+              title: const Text('Per habit'),
+              subtitle: const Text('Show calendar for a selected habit'),
+              onChanged: (v) async {
+                final p = await SharedPreferences.getInstance();
+                await p.setString('widget_mode', 'per');
+                // if no selected id and we have habits, pick first
+                if (selectedId == null && habits.isNotEmpty) {
+                  await p.setString('widget_habit_id', habits.first.id);
+                }
+                await habitProvider.refreshWidget();
+                setState(() {});
+              },
+            ),
+            if (mode == 'per') ...[
+              const SizedBox(height: 6),
+              Text('Select habit', style: Theme.of(context).textTheme.bodyMedium),
+              const SizedBox(height: 6),
+              habits.isEmpty
+                  ? const Text('No active habits available')
+                  : DropdownButton<String>(
+                      value: selectedId ?? habits.first.id,
+                      isExpanded: true,
+                      items: habits
+                          .map((h) => DropdownMenuItem(value: h.id, child: Text(h.name)))
+                          .toList(),
+                      onChanged: (val) async {
+                        if (val == null) return;
+                        final p = await SharedPreferences.getInstance();
+                        await p.setString('widget_habit_id', val);
+                        await habitProvider.refreshWidget();
+                        setState(() {});
+                      },
+                    ),
+            ],
+          ],
+        );
+      },
     );
   }
 

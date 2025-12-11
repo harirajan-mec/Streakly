@@ -9,14 +9,26 @@ class WidgetService {
     required bool todayCompleted,
     required String habitName,
     required String nextReminder,
+    int? habitColor,
+    int? habitIcon,
+    required List<Map<String, dynamic>> calendar,
+    String? mode,
+    String? habitId,
   }) async {
     try {
-      await platform.invokeMethod('updateWidget', {
+      final payload = {
         'streakCount': streakCount,
         'todayCompleted': todayCompleted,
         'habitName': habitName,
         'nextReminder': nextReminder,
-      });
+        'habitColor': habitColor,
+        'habitIcon': habitIcon,
+        'calendar': calendar,
+      };
+      if (mode != null) payload['mode'] = mode;
+      if (habitId != null) payload['habitId'] = habitId;
+
+      await platform.invokeMethod('updateWidget', payload);
     } catch (e) {
       print('Error updating widget: $e');
     }

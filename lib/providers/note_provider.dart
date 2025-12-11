@@ -11,6 +11,18 @@ class NoteProvider with ChangeNotifier {
   List<Note> get notes => _notes;
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
+  bool _showSearch = false;
+
+  bool get showSearch => _showSearch;
+
+  void toggleShowSearch([bool? value]) {
+    if (value != null) {
+      _showSearch = value;
+    } else {
+      _showSearch = !_showSearch;
+    }
+    notifyListeners();
+  }
   
   NoteProvider() {
     loadNotes();

@@ -5,7 +5,8 @@ import '../../providers/habit_provider.dart';
 import '../../models/habit.dart';
 
 class AnalysisScreen extends StatefulWidget {
-  const AnalysisScreen({super.key});
+  final bool showAppBar;
+  const AnalysisScreen({super.key, this.showAppBar = true});
 
   @override
   State<AnalysisScreen> createState() => _AnalysisScreenState();
@@ -20,73 +21,75 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
     final theme = Theme.of(context);
 
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: theme.scaffoldBackgroundColor,
-        elevation: 0,
-        titleSpacing: 16,
-        title: Row(
-          children: [
-            Container(
-              width: 44,
-              height: 44,
-              padding: const EdgeInsets.all(8),
-              child: Icon(
-                Icons.analytics_outlined,
-                color: theme.colorScheme.primary,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Text(
-              'Analysis',
-              style: theme.textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.w700,
-                color: theme.colorScheme.onSurface,
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          PopupMenuButton<String>(
-            initialValue: _selectedPeriod,
-            position: PopupMenuPosition.under,
-            color: theme.cardColor,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            onSelected: (value) {
-              setState(() {
-                _selectedPeriod = value;
-              });
-            },
-            itemBuilder: (context) => _periods.map((period) {
-              return PopupMenuItem(
-                value: period,
-                child: Text(period),
-              );
-            }).toList(),
-            child: Container(
-              margin: const EdgeInsets.only(right: 16),
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-              decoration: BoxDecoration(
-                color: theme.cardColor,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: theme.colorScheme.outline.withOpacity(0.2)),
-              ),
-              child: Row(
+      appBar: widget.showAppBar
+          ? AppBar(
+              backgroundColor: theme.scaffoldBackgroundColor,
+              elevation: 0,
+              titleSpacing: 16,
+              title: Row(
                 children: [
-                  Text(
-                    _selectedPeriod,
-                    style: theme.textTheme.titleSmall?.copyWith(
-                      color: theme.colorScheme.onSurface,
-                      fontWeight: FontWeight.w600,
+                  Container(
+                    width: 44,
+                    height: 44,
+                    padding: const EdgeInsets.all(8),
+                    child: Icon(
+                      Icons.analytics_outlined,
+                      color: theme.colorScheme.primary,
                     ),
                   ),
-                  const SizedBox(width: 4),
-                  Icon(Icons.keyboard_arrow_down, color: theme.colorScheme.onSurface, size: 20),
+                  const SizedBox(width: 12),
+                  Text(
+                    'Analysis',
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: theme.colorScheme.onSurface,
+                    ),
+                  ),
                 ],
               ),
-            ),
-          ),
-        ],
-      ),
+              actions: [
+                PopupMenuButton<String>(
+                  initialValue: _selectedPeriod,
+                  position: PopupMenuPosition.under,
+                  color: theme.cardColor,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  onSelected: (value) {
+                    setState(() {
+                      _selectedPeriod = value;
+                    });
+                  },
+                  itemBuilder: (context) => _periods.map((period) {
+                    return PopupMenuItem(
+                      value: period,
+                      child: Text(period),
+                    );
+                  }).toList(),
+                  child: Container(
+                    margin: const EdgeInsets.only(right: 16),
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: theme.cardColor,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: theme.colorScheme.outline.withOpacity(0.2)),
+                    ),
+                    child: Row(
+                      children: [
+                        Text(
+                          _selectedPeriod,
+                          style: theme.textTheme.titleSmall?.copyWith(
+                            color: theme.colorScheme.onSurface,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        Icon(Icons.keyboard_arrow_down, color: theme.colorScheme.onSurface, size: 20),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            )
+          : null,
       body: Consumer<HabitProvider>(
         builder: (context, habitProvider, child) {
           return SingleChildScrollView(
@@ -141,7 +144,7 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
                 'Total Streaks',
                 '$totalStreaks',
                 Icons.local_fire_department,
-                Color(0xFF9B5DE5),
+                Theme.of(context).colorScheme.primary,
               ),
             ),
           ],
@@ -424,7 +427,7 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
-              color: Color(0xFF9B5DE5).withOpacity(0.16),
+              color: theme.colorScheme.primary.withOpacity(0.16),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Column(
@@ -432,7 +435,7 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
                 Text(
                       '${habit.currentStreak}',
                   style: theme.textTheme.titleMedium?.copyWith(
-                    color: Color(0xFF9B5DE5),
+                    color: theme.colorScheme.primary,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -461,7 +464,7 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
           context,
           title: 'Best Streaks',
           icon: Icons.local_fire_department_outlined,
-          color: Color(0xFF9B5DE5),
+            color: Theme.of(context).colorScheme.primary,
         ),
         const SizedBox(height: 18),
         Container(
@@ -526,7 +529,7 @@ class _AnalysisScreenState extends State<AnalysisScreen> {
                     Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.local_fire_department, color: Color(0xFF9B5DE5), size: 18),
+                        Icon(Icons.local_fire_department, color: Theme.of(context).colorScheme.primary, size: 18),
                         const SizedBox(width: 6),
                         Text(
                           '${habit.longestStreak} days',

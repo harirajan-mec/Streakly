@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'habits/habit_grid_screen.dart';
+import 'profile/analysis_screen.dart';
+import 'mood/mood_tracker_screen.dart';
 import 'notes/notes_screen.dart';
 import 'habits/add_habit_screen.dart';
 import '../services/navigation_service.dart';
+import '../../widgets/shared_top_bar.dart';
 
 /// MainNavigationScreen provides persistent bottom navigation for the grid view mode
 /// This ensures all screens maintain the navigation bar when accessed from grid view
@@ -41,20 +44,25 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   }
 
   void _onTabTapped(int index) {
-    setState(() {
-      _currentIndex = index;
-    });
-    NavigationService.setCurrentTab(index);
-    _pageController.animateToPage(
-      index,
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeInOut,
-    );
+    // Don't update _currentIndex here; wait for onPageChanged to update state
+    // Avoid showing intermediate pages when jumping far distances
+    final current = _pageController.hasClients ? _pageController.page?.round() ?? _currentIndex : _currentIndex;
+    if ((current - index).abs() > 1) {
+      _pageController.jumpToPage(index);
+    } else {
+      _pageController.animateToPage(
+        index,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final isKeyboardVisible = MediaQuery.of(context).viewInsets.bottom > 0;
     return Scaffold(
+      appBar: SharedTopBar(currentIndex: _currentIndex),
       body: PageView(
         controller: _pageController,
         onPageChanged: (index) {
@@ -66,43 +74,58 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         physics: const BouncingScrollPhysics(), // Enable smooth scrolling with bounce effect
         allowImplicitScrolling: false,
         children: const [
-          HabitGridScreen(),
-          NotesScreen(),
+          HabitGridScreen(showAppBar: false),
+          AnalysisScreen(showAppBar: false),
+          MoodTrackerScreen(showAppBar: false),
+          NotesScreen(showAppBar: false),
         ],
       ),
-      floatingActionButton: Container(
-        width: 60,
-        height: 60,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          gradient: LinearGradient(
-            colors: [
-              Theme.of(context).colorScheme.primary,
-              Theme.of(context).colorScheme.primary.withOpacity(0.8),
-            ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
+      floatingActionButton: AnimatedSlide(
+        offset: isKeyboardVisible ? const Offset(0, 2.5) : Offset.zero,
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeOut,
+        child: AnimatedOpacity(
+          opacity: isKeyboardVisible ? 0 : 1,
+          duration: const Duration(milliseconds: 150),
+          curve: Curves.easeOut,
+          child: IgnorePointer(
+            ignoring: isKeyboardVisible,
+            child: Container(
+              width: 60,
+              height: 60,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: LinearGradient(
+                  colors: [
+                    Theme.of(context).colorScheme.primary,
+                    Theme.of(context).colorScheme.primary.withOpacity(0.8),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: FloatingActionButton(
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const AddHabitScreen()),
+                  );
+                },
+                backgroundColor: Colors.transparent,
+                elevation: 0,
+                child: const Icon(
+                  Icons.add,
+                  color: Colors.white,
+                  size: 28,
+                ),
+              ),
             ),
-          ],
-        ),
-        child: FloatingActionButton(
-          onPressed: () {
-            Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const AddHabitScreen()),
-            );
-          },
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          child: const Icon(
-            Icons.add,
-            color: Colors.white,
-            size: 28,
           ),
         ),
       ),
@@ -127,9 +150,11 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                Expanded(child: _buildNavItem(0, Icons.track_changes_outlined, Icons.track_changes, 'Habits')),
+                Expanded(child: _buildNavItem(0, Icons.track_changes_outlined, Icons.track_changes, 'Home')),
+                Expanded(child: _buildNavItem(1, Icons.analytics_outlined, Icons.analytics, 'Analysis')),
                 const SizedBox(width: 60), // Space for FAB
-                Expanded(child: _buildNavItem(1, Icons.note_outlined, Icons.note, 'Notes')),
+                Expanded(child: _buildNavItem(2, Icons.mood_outlined, Icons.mood, 'Mood')),
+                Expanded(child: _buildNavItem(3, Icons.note_outlined, Icons.note, 'Notes')),
               ],
             ),
           ),

@@ -1,6 +1,8 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:flutter/services.dart';
 import 'package:timezone/data/latest.dart' as tzdata;
 import 'package:timezone/timezone.dart' as tz;
 import 'package:flutter_timezone/flutter_timezone.dart';
@@ -14,6 +16,8 @@ class NotificationService {
   factory NotificationService() => _instance;
 
   final FlutterLocalNotificationsPlugin _plugin = FlutterLocalNotificationsPlugin();
+
+  static const MethodChannel _platform = MethodChannel('streakly/permissions');
 
   static const String _channelId = 'streakly_daily_channel';
   static const String _channelName = 'Streakly Reminders';
@@ -63,26 +67,60 @@ class NotificationService {
           .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
           ?.createNotificationChannel(androidChannel);
 
-      // Request iOS permissions only; Android 13+ handled by manifest / platform
-      await _requestPermissions();
-
       debugPrint('✅ NotificationService initialized');
     } catch (e) {
       debugPrint('❌ Error initializing notifications: $e');
     }
   }
 
-  Future<void> _requestPermissions() async {
+  /// Call this from UI to let the user explicitly grant notification + exact alarm permissions.
+  Future<void> requestPermissions() async {
     try {
+      // iOS/visionOS prompt
       await _plugin
           .resolvePlatformSpecificImplementation<IOSFlutterLocalNotificationsPlugin>()
           ?.requestPermissions(alert: true, badge: true, sound: true);
 
-      await _plugin
-          .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
-          ?.requestNotificationsPermission();
+      // Android 13+ notification runtime prompt
+        final androidPlugin = _plugin
+          .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+        await androidPlugin?.requestNotificationsPermission();
+
+      // Android 12L+/14 "Alarms & reminders" exact alarm prompt
+      if (Platform.isAndroid) {
+        final canSchedule = await _canScheduleExactAlarms();
+        if (!canSchedule) {
+          debugPrint('⚠️ App cannot schedule exact alarms. Requesting user permission...');
+          await _requestScheduleExactAlarm();
+        } else {
+          debugPrint('✅ Exact alarm permission already granted');
+        }
+      }
     } catch (e) {
       debugPrint('⚠️ Error requesting notification permissions: $e');
+    }
+  }
+
+  Future<bool> _canScheduleExactAlarms() async {
+    try {
+      final can = await _platform.invokeMethod<bool>('canScheduleExactAlarms');
+      return can ?? false;
+    } on PlatformException catch (e) {
+      debugPrint('⚠️ PlatformException checking exact alarm capability: $e');
+      return false;
+    } catch (e) {
+      debugPrint('⚠️ Error checking exact alarm capability: $e');
+      return false;
+    }
+  }
+
+  Future<void> _requestScheduleExactAlarm() async {
+    try {
+      await _platform.invokeMethod('requestScheduleExactAlarm');
+    } on PlatformException catch (e) {
+      debugPrint('⚠️ PlatformException requesting exact alarm permission: $e');
+    } catch (e) {
+      debugPrint('⚠️ Error requesting exact alarm permission: $e');
     }
   }
 
@@ -129,6 +167,18 @@ class NotificationService {
     DateTimeComponents? matchComponents,
   }) async {
     try {
+      var scheduleMode = AndroidScheduleMode.exactAllowWhileIdle;
+
+      if (Platform.isAndroid) {
+        final canSchedule = await _canScheduleExactAlarms();
+        if (!canSchedule) {
+          debugPrint('⚠️ Exact alarm not granted; requesting then falling back to inexact for id=$id');
+          await _requestScheduleExactAlarm();
+          // Fall back so the reminder still fires even if the user declines exact alarms.
+          scheduleMode = AndroidScheduleMode.inexactAllowWhileIdle;
+        }
+      }
+
       final tzDateTime = tz.TZDateTime.from(scheduledDateTime, tz.local);
       await _plugin.zonedSchedule(
         id,
@@ -137,7 +187,7 @@ class NotificationService {
         tzDateTime,
         _notificationDetails(),
         payload: payload,
-        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        androidScheduleMode: scheduleMode,
         uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
         matchDateTimeComponents: matchComponents,
       );

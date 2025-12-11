@@ -129,11 +129,11 @@ class HeroStatsCard extends StatelessWidget {
 
                           if (isGold) {
                             // Tint the animation to gold using ShaderMask
+                            final secondary = theme.colorScheme.secondary;
                             return ShaderMask(
                               blendMode: BlendMode.srcATop,
-                              shaderCallback: (rect) =>
-                                  const LinearGradient(
-                                colors: [Color(0xFFFFD700), Color(0xFFFFD700)],
+                              shaderCallback: (rect) => LinearGradient(
+                                colors: [secondary, secondary],
                               ).createShader(rect),
                               child: lottie,
                             );

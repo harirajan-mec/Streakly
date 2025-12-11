@@ -7,7 +7,7 @@ class NavigationService {
   NavigationService._internal();
 
   static const String _viewModeKey = 'view_mode_preference';
-  static bool _isGridViewMode = false;
+  static bool _isGridViewMode = true; // default grid until prefs load
   static int _currentTabIndex = 0;
   static GlobalKey<NavigatorState>? _navigatorKey;
 

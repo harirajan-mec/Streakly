@@ -186,12 +186,12 @@ class _CongratulationsPopupState extends State<CongratulationsPopup>
             numberOfParticles: 50,
             gravity: 0.05,
             shouldLoop: false,
-            colors: const [
+            colors: [
               Colors.green,
               Colors.blue,
               Colors.pink,
               Colors.orange,
-              Color(0xFF9B5DE5),
+              Theme.of(context).colorScheme.primary,
             ],
           ),
         ),
@@ -213,7 +213,7 @@ class _HabitIconBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final baseColor = color ?? Colors.orange;
+    final baseColor = color ?? Theme.of(context).colorScheme.primary;
 
     return Container(
       width: 90,

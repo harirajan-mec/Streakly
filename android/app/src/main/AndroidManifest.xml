@@ -1,16 +1,55 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
-    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
+
+    <!-- Permissions -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
-    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
-    <uses-permission android:name="com.android.vending.BILLING" />
+    <uses-permission android:name="android.permission.INTERNET" />
+     
 
     <application
         android:label="Streakly"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
+
+        <!-- AdMob app ID required for Google Mobile Ads SDK initialization -->
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="ca-app-pub-9133183118664083~8478062334" />
+
+        <receiver
+            android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationReceiver"
+            android:exported="true" />
+
+        <receiver
+            android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationBootReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+                <action android:name="com.htc.intent.action.QUICKBOOT_POWERON" />
+            </intent-filter>
+        </receiver>
+
+        <receiver
+            android:name="com.dexterous.flutterlocalnotifications.ActionBroadcastReceiver"
+            android:exported="false" />
+
+        <!-- Streakly Home Widget provider -->
+        <receiver
+            android:name="com.harirajan.streakly.StreaklyWidgetProvider"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/streakly_widget_info" />
+        </receiver>
+
+
+
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -19,33 +58,20 @@
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
             android:hardwareAccelerated="true"
             android:windowSoftInputMode="adjustResize">
+
             <meta-data
-              android:name="io.flutter.embedding.android.NormalTheme"
-              android:resource="@style/NormalTheme"
-              />
+                android:name="io.flutter.embedding.android.NormalTheme"
+                android:resource="@style/NormalTheme" />
+                
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
+
         </activity>
 
-        <!-- Add this receiver -->
-        <receiver android:name="com.dexterous.flutterlocalnotifications.receivers.NotificationReceiver"
-            android:exported="false" />
-        <receiver android:name="com.dexterous.flutterlocalnotifications.receivers.ActionReceiver"
-            android:exported="false" />
-        <receiver android:name="com.dexterous.flutterlocalnotifications.receivers.DismissedReceiver"
-            android:exported="false" />
-        <!-- Removed RebootBroadcastReceiver: plugin class not present in APK on some setups.
-             Keeping other flutter_local_notifications receivers intact. If you need reboot
-             handling, re-add the receiver after ensuring the plugin provides the class. -->
+        <meta-data android:name="flutterEmbedding" android:value="2"/>
 
-        <meta-data
-            android:name="flutterEmbedding"
-            android:value="2" />
-        <meta-data
-            android:name="com.google.android.gms.ads.APPLICATION_ID"
-            android:value="ca-app-pub-9133183118664083~8478062334"/>
     </application>
-    <uses-permission android:name="android.permission.INTERNET"/>
+
 </manifest>

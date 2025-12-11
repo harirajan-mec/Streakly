@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../config/app_theme.dart';
 import 'package:in_app_review/in_app_review.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/habit.dart';
@@ -6,6 +7,7 @@ import '../widgets/congratulations_popup.dart';
 import '../services/hive_service.dart';
 // NotificationService and timezone usage removed
 import '../services/admob_service.dart'; // Import AdmobService
+import '../services/widget_service.dart';
 
 class HabitProvider with ChangeNotifier {
   final List<Habit> _habits = [];
@@ -105,6 +107,15 @@ class HabitProvider with ChangeNotifier {
     } finally {
       _isLoading = false;
       notifyListeners();
+
+      // Update native home widget after adding habit
+      try {
+        if (_habits.isNotEmpty) {
+          _updateNativeWidget(_habits.last);
+        }
+      } catch (e) {
+        debugPrint('Widget update failed: $e');
+      }
     }
   }
 
@@ -144,6 +155,16 @@ class HabitProvider with ChangeNotifier {
     } finally {
       _isLoading = false;
       notifyListeners();
+
+      // Update native home widget with latest data (best-effort)
+      try {
+        final latest = getHabitById(id);
+        if (latest != null) {
+          _updateNativeWidget(latest);
+        }
+      } catch (e) {
+        debugPrint('Widget update failed: $e');
+      }
     }
   }
 
@@ -175,6 +196,15 @@ class HabitProvider with ChangeNotifier {
     } finally {
       _isLoading = false;
       notifyListeners();
+
+      // Update native home widget after deleting habit
+      try {
+        if (_habits.isNotEmpty) {
+          _updateNativeWidget(_habits.first);
+        }
+      } catch (e) {
+        debugPrint('Widget update failed: $e');
+      }
     }
   }
 
@@ -230,6 +260,13 @@ class HabitProvider with ChangeNotifier {
       }
 
       notifyListeners();
+
+      // Update native home widget with latest data (best-effort)
+      try {
+        _updateNativeWidget(_habits[index]);
+      } catch (e) {
+        debugPrint('Widget update failed: $e');
+      }
     }
   }
 
@@ -261,7 +298,7 @@ class HabitProvider with ChangeNotifier {
         habitName: 'All habits completed',
         customMessage: 'You completed all your habits for today! 🎉',
         habitIcon: Icons.workspace_premium,
-        habitColor: Color(0xFF9B5DE5),
+        habitColor: AppTheme.primary,
       ),
     );
   }
@@ -282,6 +319,134 @@ class HabitProvider with ChangeNotifier {
 
   String _getDateKey(DateTime date) {
     return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
+  }
+
+  String _formatNextReminder(Habit habit) {
+    if (habit.reminderTime == null) return 'No reminders';
+    final time = habit.reminderTime!;
+    final hour = time.hourOfPeriod == 0 ? 12 : time.hourOfPeriod;
+    final minute = time.minute.toString().padLeft(2, '0');
+    final period = time.period == DayPeriod.am ? 'AM' : 'PM';
+    return '$hour:$minute $period';
+  }
+
+  Future<void> _updateNativeWidget([Habit? changedHabit]) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final mode = prefs.getString('widget_mode') ?? 'all'; // 'all' or 'per'
+      final selectedHabitId = prefs.getString('widget_habit_id');
+
+      List<Map<String, dynamic>> calendar;
+      String? sentHabitId;
+
+      if (mode == 'per') {
+        // Determine target habit: prefer changedHabit, then selectedHabitId, then first active habit
+        Habit? target = changedHabit;
+        if (target == null && selectedHabitId != null) {
+          target = getHabitById(selectedHabitId);
+        }
+        if (target == null && activeHabits.isNotEmpty) {
+          target = activeHabits.first;
+        }
+
+        if (target != null) {
+          calendar = _buildCalendarForHabit(target);
+          sentHabitId = target.id;
+        } else {
+          // fallback to all-habits calendar if no target found
+          calendar = _buildCalendarData();
+          sentHabitId = null;
+        }
+      } else {
+        calendar = _buildCalendarData();
+        sentHabitId = null;
+      }
+
+      String habitNameToSend = '';
+      String nextReminderToSend = '';
+      int? habitColorToSend;
+      int? habitIconToSend;
+      if (sentHabitId != null) {
+        final habit = getHabitById(sentHabitId);
+        if (habit != null) {
+          habitNameToSend = habit.name;
+          nextReminderToSend = _formatNextReminder(habit);
+          habitColorToSend = habit.color.value;
+          habitIconToSend = habit.icon.codePoint;
+        }
+      }
+
+      await WidgetService.updateWidget(
+        streakCount: _allHabitsDayStreak(),
+        todayCompleted: _areAllHabitsCompleted(),
+        habitName: habitNameToSend,
+        nextReminder: nextReminderToSend,
+        habitColor: habitColorToSend,
+        habitIcon: habitIconToSend,
+        calendar: calendar,
+        mode: mode,
+        habitId: sentHabitId,
+      );
+      await WidgetService.refreshWidget();
+    } catch (e) {
+      debugPrint('Error updating native widget: $e');
+    }
+  }
+
+  List<Map<String, dynamic>> _buildCalendarForHabit(Habit habit) {
+    final List<Map<String, dynamic>> days = [];
+    final now = DateTime.now();
+    final daysInMonth = DateTime(now.year, now.month + 1, 0).day;
+
+    for (int day = 1; day <= daysInMonth; day++) {
+      final date = DateTime(now.year, now.month, day);
+      days.add({
+        'day': day.toString(),
+        'done': _didCompleteHabitOnDate(habit, date),
+      });
+    }
+    return days;
+  }
+
+  List<Map<String, dynamic>> _buildCalendarData() {
+    // All days of the current month, ordered 1..daysInMonth
+    final List<Map<String, dynamic>> days = [];
+    final now = DateTime.now();
+    final daysInMonth = DateTime(now.year, now.month + 1, 0).day;
+
+    for (int day = 1; day <= daysInMonth; day++) {
+      final date = DateTime(now.year, now.month, day);
+      days.add({
+        'day': day.toString(),
+        'done': _areAllHabitsCompletedOn(date),
+      });
+    }
+    return days;
+  }
+
+  bool _areAllHabitsCompletedOn(DateTime date) {
+    final activeHabitsList = activeHabits;
+    if (activeHabitsList.isEmpty) return false;
+    return activeHabitsList.every((habit) => _didCompleteHabitOnDate(habit, date));
+  }
+
+  int _allHabitsDayStreak() {
+    // Count consecutive days ending today where all habits were completed
+    int streak = 0;
+    DateTime cursor = DateTime.now();
+
+    while (_areAllHabitsCompletedOn(cursor)) {
+      streak++;
+      cursor = cursor.subtract(const Duration(days: 1));
+    }
+
+    return streak;
+  }
+
+  bool _didCompleteHabitOnDate(Habit habit, DateTime date) {
+    final key = _getDateKey(date);
+    final count = habit.dailyCompletions[key] ?? 0;
+    return count >= habit.remindersPerDay;
   }
 
   Habit? getHabitById(String id) {
@@ -314,5 +479,14 @@ class HabitProvider with ChangeNotifier {
       }
       return habit.name.trim().toLowerCase() == normalized;
     });
+  }
+
+  /// Public method to force a widget refresh from outside the provider.
+  Future<void> refreshWidget() async {
+    try {
+      await _updateNativeWidget();
+    } catch (e) {
+      debugPrint('Error refreshing widget: $e');
+    }
   }
 }

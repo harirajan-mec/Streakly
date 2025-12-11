@@ -12,7 +12,8 @@ import '../profile/profile_screen.dart';
 import '../subscription/subscription_plans_screen.dart';
 
 class HabitsScreen extends StatefulWidget {
-  const HabitsScreen({super.key});
+  final bool showAppBar;
+  const HabitsScreen({super.key, this.showAppBar = true});
 
   @override
   State<HabitsScreen> createState() => _HabitsScreenState();
@@ -55,62 +56,65 @@ class _HabitsScreenState extends State<HabitsScreen>
     final theme = Theme.of(context);
 
     return Scaffold(
-        appBar: AppBar(
-          backgroundColor: theme.colorScheme.surface.withAlpha((0.95 * 255).round()),
-        elevation: 0,
-        titleSpacing: 0,
-        title: Row(
-          children: [
-            const SizedBox(width: 16),
-            SizedBox(
-              height: 40,
-              width: 40,
-              child: Lottie.asset(
-                'assets/animations/Flame animation(1).json',
-                repeat: true,
-                fit: BoxFit.contain,
+      appBar: widget.showAppBar
+          ? AppBar(
+              backgroundColor:
+                  theme.colorScheme.surface.withAlpha((0.95 * 255).round()),
+              elevation: 0,
+              titleSpacing: 0,
+              title: Row(
+                children: [
+                  const SizedBox(width: 16),
+                  SizedBox(
+                    height: 40,
+                    width: 40,
+                    child: Lottie.asset(
+                      'assets/animations/Flame animation(1).json',
+                      repeat: true,
+                      fit: BoxFit.contain,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Streakly',
+                    style: theme.textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
               ),
-            ),
-            const SizedBox(width: 8),
-            Text(
-              'Streakly',
-              style: theme.textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.view_module),
-            onPressed: () => _showViewOptionsBottomSheet(context),
-          ),
-          IconButton(
-            icon: Icon(
-              Icons.workspace_premium,
-              color: const Color(0xFFFFD700), // Gold color
-              size: 28,
-            ),
-            onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (context) => SubscriptionPlansScreen(),
+              actions: [
+                IconButton(
+                  icon: const Icon(Icons.view_module),
+                  onPressed: () => _showViewOptionsBottomSheet(context),
                 ),
-              );
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.person_outline, size: 24),
-            onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => const ProfileScreen(),
+                IconButton(
+                  icon: Icon(
+                    Icons.workspace_premium,
+                    color: theme.colorScheme.secondary,
+                    size: 28,
+                  ),
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => SubscriptionPlansScreen(),
+                      ),
+                    );
+                  },
                 ),
-              );
-            },
-          ),
-        ],
-      ),
+                IconButton(
+                  icon: const Icon(Icons.settings, size: 24),
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const ProfileScreen(),
+                      ),
+                    );
+                  },
+                ),
+              ],
+            )
+          : null,
       body: Consumer<HabitProvider>(
         builder: (context, habitProvider, child) {
           return _buildHabitsList(habitProvider.activeHabits);
@@ -332,9 +336,10 @@ class _HabitsScreenState extends State<HabitsScreen>
                       ? theme.colorScheme.primary
                       : null,
                 ),
-                onTap: () {
+                onTap: () async {
                   Navigator.pop(context); // Close bottom sheet
-                  // Already on list view, no navigation needed
+                  await NavigationService.setGridViewMode(false);
+                  // Already on list view UI, but persist preference to avoid drift
                 },
               ),
 

@@ -157,16 +157,16 @@ class ModernHabitCard extends StatelessWidget {
       children: [
         // Habit Icon
         Container(
-          width: 40,
-          height: 40,
+          width: 56,
+          height: 56,
           decoration: BoxDecoration(
             color: habit.color.withAlpha((0.2 * 255).round()),
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(12),
           ),
           child: Icon(
             habit.icon,
             color: habit.color,
-            size: 20,
+            size: 28,
           ),
         ),
         const SizedBox(width: 12),
@@ -216,7 +216,7 @@ class ModernHabitCard extends StatelessWidget {
         // Completion Status
         Consumer<HabitProvider>(
           builder: (context, habitProvider, child) {
-            return GestureDetector(
+                return GestureDetector(
               onTap: isFullyCompleted 
                   ? null // Disable tap when fully completed
                   : () {
@@ -224,31 +224,31 @@ class ModernHabitCard extends StatelessWidget {
                     },
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
-                width: 28,
-                height: 28,
-                decoration: BoxDecoration(
-                  color: isFullyCompleted 
-                      ? Colors.green 
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: isFullyCompleted 
+                          ? Colors.green 
+                            : isCompleted 
+                              ? Colors.green.withAlpha((0.5 * 255).round())
+                              : Colors.transparent,
+                      border: Border.all(
+                        color: isFullyCompleted 
+                        ? Colors.green 
                         : isCompleted 
                           ? Colors.green.withAlpha((0.5 * 255).round())
-                          : Colors.transparent,
-                  border: Border.all(
-                    color: isFullyCompleted 
-                    ? Colors.green 
-                    : isCompleted 
-                      ? Colors.green.withAlpha((0.5 * 255).round())
-                      : Colors.white.withAlpha((0.3 * 255).round()),
-                    width: 2,
-                  ),
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: isCompleted
-                    ? Icon(
-                        isFullyCompleted ? Icons.check : Icons.check,
-                        color: Colors.white,
-                        size: 16,
-                      )
-                    : null,
+                          : Colors.white.withAlpha((0.3 * 255).round()),
+                        width: 3,
+                      ),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: isCompleted
+                        ? Icon(
+                            isFullyCompleted ? Icons.check : Icons.check,
+                            color: Colors.white,
+                            size: 20,
+                          )
+                        : null,
               ),
             );
           },
@@ -291,21 +291,25 @@ class ModernHabitCard extends StatelessWidget {
     final isToday = _isSameDay(day, now);
     final isFuture = day.isAfter(now);
     final isCompleted = habit.completedDates.any((date) => _isSameDay(date, day));
-    final isMissed = !isFuture && !isCompleted && !isToday;
+    final isBeforeCreation = day.isBefore(habit.createdAt);
 
+    // Color rules:
+    // - Completed: solid habit.color
+    // - Future OR before habit.createdAt: habit.color @ 15% alpha
+    // - App installed but not completed (missed): habit.color @ 40% alpha
     Color cellColor;
     Color? borderColor;
 
-    if (isFuture) {
-      cellColor = Colors.grey.withAlpha((0.3 * 255).round());
-    } else if (isCompleted) {
-      cellColor = Colors.green;
-    } else if (isMissed) {
-      cellColor = Colors.red.withAlpha((0.8 * 255).round());
+    if (isCompleted) {
+      cellColor = habit.color;
+    } else if (isFuture || isBeforeCreation) {
+      cellColor = habit.color.withAlpha((0.15 * 255).round());
     } else {
-      // Today but not completed
-      cellColor = Colors.grey.withAlpha((0.3 * 255).round());
-      borderColor = Colors.white.withAlpha((0.5 * 255).round());
+      // Missed day or today-but-not-completed
+      cellColor = habit.color.withAlpha((0.40 * 255).round());
+      if (isToday) {
+        borderColor = Colors.white.withAlpha((0.5 * 255).round());
+      }
     }
 
     return Container(

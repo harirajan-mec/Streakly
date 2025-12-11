@@ -107,16 +107,16 @@ class _AddHabitDialogState extends State<_AddHabitDialog> {
     Icons.directions_walk, // Walking
   ];
 
-  final List<Color> _availableColors = [
-    Colors.orange,
-    Colors.blue,
-    Colors.green,
-    Color(0xFF9B5DE5),
-    Colors.red,
-    Colors.teal,
-    Colors.indigo,
-    Colors.pink,
-  ];
+  List<Color> _availableColors(BuildContext context) => [
+        Colors.orange,
+        Colors.blue,
+        Colors.green,
+        Theme.of(context).colorScheme.primary,
+        Colors.red,
+        Colors.teal,
+        Colors.indigo,
+        Colors.pink,
+      ];
 
   @override
   Widget build(BuildContext context) {
@@ -194,7 +194,7 @@ class _AddHabitDialogState extends State<_AddHabitDialog> {
             const SizedBox(height: 8),
             Wrap(
               spacing: 8,
-              children: _availableColors.map((color) {
+              children: _availableColors(context).map((color) {
                 final isSelected = color == _selectedColor;
                 return GestureDetector(
                   onTap: () => setState(() => _selectedColor = color),

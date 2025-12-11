@@ -14,13 +14,15 @@ class StreakSummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0xFF18131F),
+        color: theme.colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.white.withOpacity(0.05)),
+        border: Border.all(color: theme.colorScheme.outline.withOpacity(0.08)),
       ),
       child: Row(
         children: [
@@ -30,7 +32,7 @@ class StreakSummaryCard extends StatelessWidget {
               label: 'Total Streaks',
               value: totalStreaks.toString(),
               icon: Icons.local_fire_department,
-              accent: Color(0xFF9B5DE5),
+              accent: theme.colorScheme.primary,
             ),
           ),
           Container(

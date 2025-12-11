@@ -7,11 +7,13 @@ import '../providers/auth_provider.dart'; // Import AuthProvider
 class MultiCompletionButton extends StatelessWidget {
   final Habit habit;
   final double size;
+  final bool isSquare;
 
   const MultiCompletionButton({
     super.key,
     required this.habit,
-    this.size = 32,
+    this.size = 44,
+    this.isSquare = false,
   });
 
   @override
@@ -36,22 +38,104 @@ class MultiCompletionButton extends StatelessWidget {
             child: Container(
               width: size,
               height: size,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: currentCount > 0 
-                      ? habit.color 
-                      : Theme.of(context).colorScheme.outline,
-                  width: 2,
-                ),
-              ),
-              child: CustomPaint(
-                painter: MultiCompletionPainter(
-                  currentCount: currentCount,
-                  totalRequired: totalRequired,
-                  color: habit.color,
-                ),
-              ),
+              // Square variant (used on grid): fill background proportional to completions
+              decoration: isSquare
+                  ? null
+                  : BoxDecoration(
+                      color: Colors.transparent,
+                      borderRadius: null,
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: currentCount > 0
+                            ? habit.color
+                            : Theme.of(context).colorScheme.outline,
+                        width: 2,
+                      ),
+                    ),
+              child: isSquare
+                  ? Builder(builder: (context) {
+                      // Compute opacity: initial bg similar to habit icon bg (≈18%).
+                      // For multiple reminders, use (currentCount / totalRequired) as opacity fraction.
+                      double baseOpacity = 0.18;
+                      double fillOpacity;
+                      if (totalRequired <= 1) {
+                        // single/no reminders -> toggle full fill when completed
+                        fillOpacity = currentCount > 0 ? 1.0 : baseOpacity;
+                      } else {
+                        if (currentCount <= 0) {
+                          fillOpacity = baseOpacity;
+                        } else {
+                          fillOpacity = (currentCount / totalRequired).clamp(0.0, 1.0);
+                          // Ensure we don't go below baseOpacity for small fractions
+                          if (fillOpacity < baseOpacity) fillOpacity = baseOpacity;
+                        }
+                      }
+
+                      final bg = habit.color.withOpacity(fillOpacity);
+
+                      return Container(
+                        width: size,
+                        height: size,
+                        decoration: BoxDecoration(
+                          color: bg,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Center(
+                          child: () {
+                            // Determine what to show inside the square button so user can identify
+                            // how to complete the habit at a glance.
+                            if (totalRequired <= 1) {
+                              // Single completion: show check when completed, otherwise an outline box
+                              if (currentCount >= totalRequired && currentCount > 0) {
+                                return Icon(
+                                  Icons.check,
+                                  color: Colors.white,
+                                  size: size * 0.5,
+                                );
+                              } else {
+                                // Show a subtle check icon to indicate actionability
+                                return Semantics(
+                                  label: 'Mark habit complete',
+                                  button: true,
+                                  child: Icon(
+                                    Icons.check,
+                                    color: habit.color,
+                                    size: size * 0.5,
+                                  ),
+                                );
+                              }
+                            } else {
+                              // Multiple reminders per day: show fraction 'x/N' so user knows how many
+                              // completions are required. Use contrast-aware text color.
+                              final textColor = (fillOpacity >= 0.6) ? Colors.white : habit.color;
+                              if (currentCount >= totalRequired) {
+                                return Icon(
+                                  Icons.check,
+                                  color: Colors.white,
+                                  size: size * 0.5,
+                                );
+                              }
+
+                              return Text(
+                                '$currentCount/$totalRequired',
+                                style: TextStyle(
+                                  color: textColor,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: size * 0.36,
+                                ),
+                              );
+                            }
+                          }(),
+                        ),
+                      );
+                    })
+                  : CustomPaint(
+                      painter: MultiCompletionPainter(
+                        currentCount: currentCount,
+                        totalRequired: totalRequired,
+                        color: habit.color,
+                      ),
+                    ),
             ),
           ),
         );
@@ -76,7 +160,9 @@ class MultiCompletionPainter extends CustomPainter {
     if (currentCount == 0) return;
 
     final center = Offset(size.width / 2, size.height / 2);
-    final radius = (size.width - 6) / 2; // Account for stroke width
+    // Stroke width scales with size so larger buttons keep proportion
+    final strokeWidth = size.width * 0.09; // ~9% of width (about 4 for 44px)
+    final radius = (size.width - strokeWidth * 2) / 2; // Account for stroke width
     
     // Check if all reminders are completed
     if (currentCount >= totalRequired) {
@@ -91,7 +177,7 @@ class MultiCompletionPainter extends CustomPainter {
       final checkPaint = Paint()
         ..color = Colors.white
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 3.0
+        ..strokeWidth = strokeWidth * 0.9
         ..strokeCap = StrokeCap.round
         ..strokeJoin = StrokeJoin.round;
       
@@ -106,7 +192,7 @@ class MultiCompletionPainter extends CustomPainter {
       final borderPaint = Paint()
         ..color = color
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 3;
+        ..strokeWidth = strokeWidth;
 
       if (totalRequired == 1) {
         // Single completion - full circle border with checkmark
@@ -116,7 +202,7 @@ class MultiCompletionPainter extends CustomPainter {
         final checkPaint = Paint()
           ..color = color
           ..style = PaintingStyle.stroke
-          ..strokeWidth = 2.5
+          ..strokeWidth = strokeWidth * 0.75
           ..strokeCap = StrokeCap.round
           ..strokeJoin = StrokeJoin.round;
         

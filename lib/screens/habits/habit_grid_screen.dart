@@ -14,7 +14,8 @@ import '../subscription/subscription_plans_screen.dart';
 import '../../providers/auth_provider.dart'; // Import AuthProvider
 
 class HabitGridScreen extends StatefulWidget {
-  const HabitGridScreen({super.key});
+  final bool showAppBar;
+  const HabitGridScreen({super.key, this.showAppBar = true});
 
   @override
   State<HabitGridScreen> createState() => _HabitGridScreenState();
@@ -35,63 +36,66 @@ class _HabitGridScreenState extends State<HabitGridScreen> {
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      appBar: AppBar(
-        backgroundColor: theme.colorScheme.surface.withAlpha((0.95 * 255).round()),
-        elevation: 0,
-        titleSpacing: 0,
-        automaticallyImplyLeading: false,
-        title: Row(
-          children: [
-            const SizedBox(width: 16),
-            SizedBox(
-              height: 40,
-              width: 40,
-              child: Lottie.asset(
-                'assets/animations/Flame animation(1).json',
-                repeat: true,
-                fit: BoxFit.contain,
+      appBar: widget.showAppBar
+          ? AppBar(
+              backgroundColor:
+                  theme.colorScheme.surface.withAlpha((0.95 * 255).round()),
+              elevation: 0,
+              titleSpacing: 0,
+              automaticallyImplyLeading: false,
+              title: Row(
+                children: [
+                  const SizedBox(width: 16),
+                  SizedBox(
+                    height: 40,
+                    width: 40,
+                    child: Lottie.asset(
+                      'assets/animations/Flame animation(1).json',
+                      repeat: true,
+                      fit: BoxFit.contain,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Streakly',
+                    style: theme.textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
               ),
-            ),
-            const SizedBox(width: 8),
-            Text(
-              'Streakly',
-              style: theme.textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.view_module),
-            onPressed: () => _showViewOptionsBottomSheet(context),
-          ),
-          IconButton(
-            icon: Icon(
-              Icons.workspace_premium,
-              color: const Color(0xFFFFD700), // Gold color
-              size: 28,
-            ),
-            onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (context) => SubscriptionPlansScreen(),
+              actions: [
+                IconButton(
+                  icon: const Icon(Icons.view_module),
+                  onPressed: () => _showViewOptionsBottomSheet(context),
                 ),
-              );
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.person_outline, size: 24),
-            onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => const ProfileScreen(),
+                IconButton(
+                  icon: Icon(
+                    Icons.workspace_premium, // tool icon
+                    color: theme.colorScheme.secondary,
+                    size: 28,
+                  ),
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => SubscriptionPlansScreen(),
+                      ),
+                    );
+                  },
                 ),
-              );
-            },
-          ),
-        ],
-      ),
+                IconButton(
+                  icon: const Icon(Icons.settings, size: 24),
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const ProfileScreen(),
+                      ),
+                    );
+                  },
+                ),
+              ],
+            )
+          : null,
       body: SafeArea(
         child: Consumer<HabitProvider>(
           builder: (context, habitProvider, child) {
@@ -250,13 +254,13 @@ class _HabitGridScreenState extends State<HabitGridScreen> {
                     Row(
                       children: [
                         Container(
-                          width: 32,
-                          height: 32,
+                          width: 44,
+                          height: 44,
                           decoration: BoxDecoration(
-                            color: const Color(0xFF2C3145),
-                            borderRadius: BorderRadius.circular(6),
+                            color: theme.colorScheme.surfaceContainerHighest,
+                            borderRadius: BorderRadius.circular(8),
                           ),
-                          child: Icon(habit.icon, color: habit.color, size: 18),
+                          child: Icon(habit.icon, color: habit.color, size: 24),
                         ),
                         const SizedBox(width: 8),
                         Column(
@@ -273,12 +277,13 @@ class _HabitGridScreenState extends State<HabitGridScreen> {
                               children: [
                                 ShaderMask(
                                   shaderCallback: (Rect bounds) {
+                                    final primary = theme.colorScheme.primary;
                                     return LinearGradient(
                                       begin: Alignment.topCenter,
                                       end: Alignment.bottomCenter,
                                       colors: [
-                                        Color(0xFFD0A9F5),
-                                        Color(0xFF9B5DE5),
+                                        primary.withOpacity(0.55),
+                                        primary,
                                       ],
                                     ).createShader(bounds);
                                   },
@@ -304,9 +309,9 @@ class _HabitGridScreenState extends State<HabitGridScreen> {
                     ),
                     Row(
                       children: [
-                        HabitNoteIconButton(habit: habit, size: 32),
-                        const SizedBox(width: 6),
-                        MultiCompletionButton(habit: habit, size: 32),
+                        HabitNoteIconButton(habit: habit, size: 44, isSquare: true),
+                        const SizedBox(width: 8),
+                        MultiCompletionButton(habit: habit, size: 44, isSquare: true),
                       ],
                     ),
                   ],
@@ -357,14 +362,17 @@ class _HabitGridScreenState extends State<HabitGridScreen> {
                           date.month == cellDate.month &&
                           date.day == cellDate.day);
 
+                      // Determine coloring:
+                      // - Completed: solid habit.color
+                      // - Future days OR before habit.createdAt: 15% alpha
+                      // - App installed but not completed (missed): 40% alpha
                       Color cellColor;
                       if (isCompleted) {
                         cellColor = habit.color;
-                      } else if (cellDate.isAfter(now)) {
+                      } else if (cellDate.isAfter(now) || cellDate.isBefore(habit.createdAt)) {
                         cellColor = habit.color.withAlpha((0.15 * 255).round());
                       } else {
-                            cellColor =
-                            theme.colorScheme.onSurface.withAlpha((0.1 * 255).round());
+                        cellColor = habit.color.withAlpha((0.40 * 255).round());
                       }
 
                       final isToday = cellDate.day == now.day &&
@@ -534,7 +542,7 @@ class _HabitGridScreenState extends State<HabitGridScreen> {
                   await NavigationService.setGridViewMode(false);
                   if (context.mounted) {
                     Navigator.of(context).pushReplacement(
-                      MaterialPageRoute(builder: (_) => const MainNavigation()),
+                      MaterialPageRoute(builder: (_) => MainNavigation(initialIndex: NavigationService.currentTabIndex)),
                     );
                   }
                 },
